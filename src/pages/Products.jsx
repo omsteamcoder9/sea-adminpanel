@@ -514,12 +514,22 @@ const Products = () => {
   const getPriceDisplay = (product) => {
     return product.basePrice || product.price || '0';
   };
-
 const getProductImage = (product) => {
+  // Check main images first
   if (product.images && product.images.length > 0 && product.images[0]?.image) {
     const filename = product.images[0].image.replace('/uploads/', '');
     return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
   }
+  
+  // Check variant images
+  if (product.variants && product.variants.length > 0) {
+    const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
+    if (defaultVariant.images && defaultVariant.images.length > 0 && defaultVariant.images[0]?.image) {
+      const filename = defaultVariant.images[0].image.replace('/uploads/', '');
+      return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
+    }
+  }
+  
   return null;
 };
   // Get sort button label based on current option
