@@ -8,15 +8,31 @@ export const categoriesAPI = {
   // Get single category
   getCategory: (id) => api.get(`/categories/${id}`),
   
-  // Create category
+  // Create category (with image)
   createCategory: (categoryData) => {
+    // Check if FormData is being used (has image)
+    if (categoryData instanceof FormData) {
+      return api.post('/categories', categoryData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
     // For regular JSON data (only name field)
     return api.post('/categories', categoryData);
   },
   
-  // Update category
+  // Update category (with image)
   updateCategory: (id, categoryData) => {
-    // For regular JSON data (only name field)
+    // Check if FormData is being used (has image or deleteImage flag)
+    if (categoryData instanceof FormData) {
+      return api.put(`/categories/${id}`, categoryData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
+    // For regular JSON data (only name field or deleteImage boolean)
     return api.put(`/categories/${id}`, categoryData);
   },
   

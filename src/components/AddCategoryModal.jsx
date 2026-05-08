@@ -1,10 +1,42 @@
 // src/components/AddCategoryModal.jsx
 import React, { useState } from 'react';
+import { Image as ImageIcon, X, Upload } from 'lucide-react';
 
 const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
   const [name, setName] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+      
+      setImageFile(file);
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
+      setError('');
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(null);
+    setImagePreview(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,8 +50,16 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
     }
     
     try {
-      await onAddCategory({ name: name.trim() });
+      const formData = new FormData();
+      formData.append('name', name.trim());
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+      
+      await onAddCategory(formData);
+      // Reset form
       setName('');
+      removeImage();
       onClose();
     } catch (error) {
       console.error('Error:', error);
@@ -74,6 +114,47 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
               placeholder="Enter category name"
               autoFocus
             />
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category Image (Optional)
+            </label>
+            {imagePreview ? (
+              <div className="relative inline-block">
+                <img
+                  src={imagePreview}
+                  alt="Category preview"
+                  className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#996600] transition-colors text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="category-image"
+                />
+                <label
+                  htmlFor="category-image"
+                  className="cursor-pointer flex flex-col items-center"
+                >
+                  <ImageIcon size={32} className="text-gray-400 mb-2" />
+                  <span className="text-sm text-gray-500">Click to upload image</span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG, JPEG up to 5MB</span>
+                </label>
+              </div>
+            )}
           </div>
 
           {/* Buttons */}
