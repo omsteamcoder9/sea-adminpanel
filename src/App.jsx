@@ -10,11 +10,13 @@ import Categories from './pages/Categories';
 import OrdersPage from './pages/OrdersPage';
 import CustomerPage from './pages/CustomerPage';
 import Settings from './pages/Settings';
+import TermsManagement from './pages/TermsManagement';
+import PrivacyManagement from './pages/PrivacyManagement'; // Import PrivacyManagement
 
 // Import Blog pages
 import Blogs from './pages/Blogs';
 import CreateBlog from './pages/CreateBlog';
-import EditBlog from './pages/EditBlog'; // Import EditBlog
+import EditBlog from './pages/EditBlog';
 
 function App() {
   return (
@@ -55,7 +57,7 @@ function App() {
               path="/blogs/edit/:id" 
               element={
                 <ProtectedRoute adminOnly={true}>
-                  <EditBlog /> {/* Use EditBlog component */}
+                  <EditBlog />
                 </ProtectedRoute>
               } 
             />
@@ -96,6 +98,26 @@ function App() {
               element={
                 <ProtectedRoute adminOnly={true}>
                   <CustomerPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Terms Management */}
+            <Route 
+              path="/terms" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <TermsManagement />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Privacy Management */}
+            <Route 
+              path="/privacy" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <PrivacyManagement />
                 </ProtectedRoute>
               } 
             />

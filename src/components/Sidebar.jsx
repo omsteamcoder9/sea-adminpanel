@@ -14,7 +14,9 @@ import {
   X,
   Eye,
   FileText,
-  LogOut
+  LogOut,
+  FileSignature,
+  Shield // Add this icon for Privacy
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -39,10 +41,12 @@ const Sidebar = () => {
 
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/categories', label: 'Categories', icon: Tag }, 
+    { path: '/categories', label: 'Categories', icon: Tag },
     { path: '/products', label: 'Products', icon: Package },
     { path: '/orders', label: 'Orders', icon: ClipboardList },
     { path: '/customers', label: 'Customers', icon: Users },
+    { path: '/terms', label: 'Terms of Service', icon: FileSignature },
+    { path: '/privacy', label: 'Privacy Policy', icon: Shield }, // Add Privacy menu item
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -127,7 +131,9 @@ const Sidebar = () => {
             <ul className="space-y-2">
               {menuItems.map((item) => {
                 const isActive = location.pathname === item.path || 
-                  (item.path === '/blogs' && location.pathname.startsWith('/blogs'));
+                  (item.path === '/blogs' && location.pathname.startsWith('/blogs')) ||
+                  (item.path === '/terms' && location.pathname.startsWith('/terms')) ||
+                  (item.path === '/privacy' && location.pathname.startsWith('/privacy'));
                 const Icon = item.icon;
                 return (
                   <li key={item.path}>
