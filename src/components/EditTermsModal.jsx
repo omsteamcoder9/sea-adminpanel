@@ -389,7 +389,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsContactInfo}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
                   placeholder="Contact information"
                 />
               </div>
