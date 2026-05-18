@@ -1,14 +1,13 @@
 // src/pages/OrdersPage.jsx
 import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../api/orders';
-import { paymentsAPI } from '../api/payments';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut, Search, Filter } from 'lucide-react';
 import { FaSyncAlt, FaTag, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 
 const OrdersPage = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +21,7 @@ const OrdersPage = () => {
   const [refundStatus, setRefundStatus] = useState({});
   const [activeRefundOrderId, setActiveRefundOrderId] = useState(null);
   const [statusUpdating, setStatusUpdating] = useState({});
-  const [userRole, setUserRole] = useState('admin');
+  const [userRole, setUserRole] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ show: false, orderId: null, orderNumber: null });
   
@@ -55,6 +54,13 @@ const OrdersPage = () => {
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Set user role from auth context
+  useEffect(() => {
+    if (user) {
+      setUserRole(user.role || 'admin');
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchOrders();
@@ -153,7 +159,6 @@ const OrdersPage = () => {
     fetchOrders(true);
   };
 
-  // Get sort button label based on current option
   const getSortLabel = () => {
     switch (sortOption) {
       case 'newest': return 'Newest First';
@@ -164,13 +169,11 @@ const OrdersPage = () => {
     }
   };
 
-  // Get status display label
   const getStatusLabel = () => {
     const found = statusOptions.find(opt => opt.value === selectedStatus);
     return found ? `${found.icon} ${found.label}` : 'All Status';
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setSelectedStatus('all');
     setSortOption('newest');
@@ -178,20 +181,24 @@ const OrdersPage = () => {
   };
 
   const handleDeleteOrder = async (orderId, orderNumber) => {
-    if (!orderId) {
-      return;
-    }
+    if (!orderId) return;
 
     try {
       setLoading(true);
       const response = await ordersAPI.deleteOrder(orderId);
       
-  if (response.data.success) {
-  setOrders(prevOrders => prevOrders.filter(order => order._id !== orderId));
-  setDeleteModal({ show: false, orderId: null, orderNumber: null });
-}
+      if (response.data.success) {
+        setOrders(prevOrders => prevOrders.filter(order => order._id !== orderId));
+        setDeleteModal({ show: false, orderId: null, orderNumber: null });
+        setError('✅ Order deleted successfully');
+        setTimeout(() => setError(''), 3000);
+      } else {
+        setError('❌ Failed to delete order: ' + (response.data.message || 'Unknown error'));
+        setTimeout(() => setError(''), 3000);
+      }
     } catch (error) {
       setError('❌ Failed to delete order');
+      console.error('Delete error:', error);
       setTimeout(() => setError(''), 3000);
     } finally {
       setLoading(false);
@@ -201,10 +208,9 @@ const OrdersPage = () => {
   const handleStatusUpdate = async (orderId, newStatus) => {
     if (newStatus === 'cancelled') {
       const confirmCancel = window.confirm(
-        ' Are you sure you want to cancel this order?\n' +
+        '⚠️ Are you sure you want to cancel this order?\n\n' +
         'This will:\n' +
         '• Restore product stock\n' +
-        '• Cancel ShipRocket shipment (if exists)\n' +
         '• Send cancellation notification'
       );
       if (!confirmCancel) return;
@@ -212,10 +218,10 @@ const OrdersPage = () => {
 
     if (newStatus === 'delivered') {
       const confirmDeliver = window.confirm(
-        '✅ Mark this order as delivered?\n' +
+        '✅ Mark this order as delivered?\n\n' +
         'This will:\n' +
-        '• Auto-complete COD payments (if applicable)\n' +
-        '• Send delivery confirmation email'
+        '• Update order status to delivered\n' +
+        '• Send delivery confirmation'
       );
       if (!confirmDeliver) return;
     }
@@ -223,27 +229,10 @@ const OrdersPage = () => {
     try {
       setStatusUpdating(prev => ({ ...prev, [orderId]: true }));
 
-      const order = orders.find(o => o._id === orderId);
-      if (!order) {
-        alert('Order not found');
-        return;
-      }
-
-      const paymentOrderId = order.orderId || order.razorpayOrderId || order.paymentId;
-      
-      if (!paymentOrderId) {
-        alert('Cannot update status: Order identifier not found');
-        return;
-      }
-
-      const response = await paymentsAPI.updatePaymentStatus(paymentOrderId, {
+      const response = await ordersAPI.updateOrderStatus(orderId, {
         orderStatus: newStatus,
         ...(newStatus === 'cancelled' && {
-          cancellationReason: 'Cancelled by admin via dashboard',
-          notes: `Order status changed to ${newStatus} by admin`
-        }),
-        ...(newStatus === 'delivered' && {
-          notes: `Order marked as delivered by admin`
+          cancellationReason: 'Cancelled by admin via dashboard'
         })
       });
       
@@ -253,9 +242,8 @@ const OrdersPage = () => {
             order._id === orderId 
               ? { 
                   ...order, 
-                  orderStatus: newStatus, 
-                  paymentStatus: response.data.order?.paymentStatus || order.paymentStatus,
-                  ...(response.data.order || {})
+                  orderStatus: newStatus,
+                  paymentStatus: response.data.order?.paymentStatus || order.paymentStatus
                 }
               : order
           )
@@ -278,22 +266,8 @@ const OrdersPage = () => {
     try {
       setStatusUpdating(prev => ({ ...prev, [orderId]: true }));
 
-      const order = orders.find(o => o._id === orderId);
-      if (!order) {
-        alert('Order not found');
-        return;
-      }
-
-      const paymentOrderId = order.orderId || order.razorpayOrderId || order.paymentId;
-      
-      if (!paymentOrderId) {
-        alert('Cannot update payment status: Order identifier not found');
-        return;
-      }
-
-      const response = await paymentsAPI.updatePaymentStatus(paymentOrderId, {
-        paymentStatus: newPaymentStatus,
-        notes: `Payment status updated to ${newPaymentStatus} by admin`
+      const response = await ordersAPI.updateOrderStatus(orderId, {
+        paymentStatus: newPaymentStatus
       });
       
       if (response.data.success) {
@@ -352,15 +326,13 @@ const OrdersPage = () => {
       { value: 'completed', label: 'Completed', color: 'green' },
       { value: 'failed', label: 'Failed', color: 'red' },
       { value: 'refunded', label: 'Refunded', color: 'purple' },
-      { value: 'partially_refunded', label: 'Partially Refunded', color: 'indigo' },
     ];
 
     const paymentStatusFlow = {
       pending: ['pending', 'completed', 'failed'],
-      completed: ['completed', 'refunded', 'partially_refunded'],
+      completed: ['completed', 'refunded'],
       failed: ['failed'],
       refunded: ['refunded'],
-      partially_refunded: ['partially_refunded'],
     };
 
     const allowedStatuses = paymentStatusFlow[currentPaymentStatus] || [currentPaymentStatus];
@@ -368,25 +340,24 @@ const OrdersPage = () => {
     return allPaymentStatuses.filter(status => allowedStatuses.includes(status.value));
   };
 
-  const isRefundable = (order) => {
-    if (!order) return false;
-    
-    const isCancelled = order.orderStatus === 'cancelled';
-    const hasPaid = order.paymentStatus === 'completed' || 
-                   order.paymentStatus === 'partially_refunded';
-    const hasPaymentId = order.paymentId && order.paymentId.trim() !== '';
-    const notFullyRefunded = order.paymentStatus !== 'refunded';
-    
-    return isCancelled && hasPaid && hasPaymentId && notFullyRefunded;
-  };
+const isRefundable = (order) => {
+  if (!order) return false;
+  
+  const isCancelled = order.orderStatus === 'cancelled';
+  const hasPaid = order.paymentStatus === 'completed';
+  const notAlreadyRefunded = order.refundStatus !== 'completed';
+  
+  // Only show refund button for cancelled orders that are paid and not yet refunded
+  return isCancelled && hasPaid && notAlreadyRefunded;
+};
 
   const processRefund = async (order) => {
     console.log('🔍 Starting refund process for order:', {
       orderId: order.orderId,
       _id: order._id,
-      paymentId: order.paymentId,
       orderStatus: order.orderStatus,
-      paymentStatus: order.paymentStatus
+      paymentStatus: order.paymentStatus,
+      refundStatus: order.refundStatus
     });
 
     if (!order) {
@@ -394,21 +365,11 @@ const OrdersPage = () => {
       return;
     }
 
-    if (!order.paymentId) {
-      console.error('Missing paymentId in order:', {
-        orderId: order.orderId,
-        availableFields: Object.keys(order)
-      });
-      alert('Cannot process refund: Payment ID not found');
-      return;
-    }
-
     if (!isRefundable(order)) {
       alert(`This order cannot be refunded because:
       • Order Status: ${order.orderStatus} ${order.orderStatus !== 'cancelled' ? ' (Must be cancelled)' : ''}
-      • Payment Status: ${order.paymentStatus} ${order.paymentStatus !== 'completed' && order.paymentStatus !== 'partially_refunded' ? '❌ (Must be completed or partially refunded)' : '✅'}
-      • Payment ID: ${order.paymentId ? 'Exists' : 'Missing'}
-      • Already Fully Refunded: ${order.paymentStatus === 'refunded' ? 'Yes' : 'No'}`);
+      • Payment Status: ${order.paymentStatus} ${order.paymentStatus !== 'completed' ? ' (Must be completed)' : ''}
+      • Refund Status: ${order.refundStatus === 'completed' ? ' (Already refunded)' : ''}`);
       return;
     }
 
@@ -426,79 +387,48 @@ const OrdersPage = () => {
         [order._id]: { status: 'processing', message: 'Processing refund...' }
       }));
       
-      const refundData = {
-        refund_amount: refundAmount,
-        notes: {
-          reason: 'Order cancelled',
-          processedBy: 'admin',
-          orderId: order.orderId
-        }
-      };
-
-      console.log('Making refund API call with data:', {
-        paymentId: order.paymentId,
+      const response = await ordersAPI.processRefund(order._id, {
         amount: refundAmount,
-        orderId: order.orderId,
-        url: `/payments/${order.paymentId}/refund`,
-        method: 'POST'
+        reason: 'Customer requested refund'
       });
-
-      const response = await paymentsAPI.refundPayment(order.paymentId, refundData);
-      
-      console.log('✅ Refund API Response:', response.data);
       
       if (response.data.success) {
+        const successMessage = response.data.alreadyRefunded 
+          ? 'Payment was already refunded! Database updated.'
+          : '✅ Payment Refunded Successfully!';
+        
         setRefundStatus(prev => ({
           ...prev,
           [order._id]: { 
             status: 'success', 
-            message: `Refunded ₹${(response.data.refund.amount / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-            refundId: response.data.refund.id
+            message: response.data.refund?.message || successMessage
           }
         }));
         
-        alert(`✅ Refund processed successfully!\nRefund ID: ${response.data.refund.id}\nAmount: ₹${(response.data.refund.amount / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`);
-        setTimeout(() => fetchOrders(), 1500);
+        setOrders(prevOrders => 
+          prevOrders.map(o => 
+            o._id === order._id 
+              ? { ...o, paymentStatus: 'refunded', refundStatus: 'completed' }
+              : o
+          )
+        );
+        
+        alert(successMessage);
+        setTimeout(() => fetchOrders(), 2000);
       } else {
-        setRefundStatus(prev => ({
-          ...prev,
-          [order._id]: { 
-            status: 'error', 
-            message: response.data.message || 'Refund failed'
-          }
-        }));
-        alert(`⚠️ Refund failed: ${response.data.message || 'Unknown error'}`);
+        throw new Error(response.data.message || 'Refund failed');
       }
+      
     } catch (error) {
-      console.error('FULL Refund error:', error);
-      
-      if (!error.response) {
-        console.error('Network error - No response from server');
-        alert('Network error: Could not connect to server');
-      }
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          error.message || 
-                          'Refund failed due to server error';
-      
+      console.error('Refund error:', error);
       setRefundStatus(prev => ({
         ...prev,
         [order._id]: { 
           status: 'error', 
-          message: errorMessage
+          message: error.response?.data?.message || error.message || 'Refund failed. Please process manually.'
         }
       }));
-      
-      alert(`Refund failed: ${errorMessage}`);
-      
-      if (errorMessage.includes('already been fully refunded')) {
-        alert('This payment has already been refunded. Check the payment status.');
-      } else if (errorMessage.includes('Payment not found')) {
-        alert('Payment ID not found in Razorpay. Verify the payment was successful.');
-      } else if (errorMessage.includes('Internal server error')) {
-        alert('Server error. Check backend logs for details.');
-      }
+      alert(`❌ Refund failed: ${error.response?.data?.message || error.message}`);
     } finally {
       setRefundLoading(false);
       setTimeout(() => {
@@ -518,17 +448,13 @@ const OrdersPage = () => {
       
       setReceiptLoading(true);
     
-      console.log('Making API call to printOrderReceipt...');
-      
       const response = await ordersAPI.printOrderReceipt(orderId);
-      console.log('Order receipt API response:', response);
       
       if (!response) {
         throw new Error('No response received from API');
       }
       
       const orderData = response.data || response;
-      console.log('Extracted order data:', orderData);
       
       if (!orderData) {
         throw new Error('No order data received from API');
@@ -536,7 +462,6 @@ const OrdersPage = () => {
       
       setSelectedOrder(orderData);
       setShowReceiptModal(true);
-      console.log('Receipt modal opened successfully');
       
     } catch (err) {
       console.error('Error fetching order receipt:', err);
@@ -566,12 +491,10 @@ const OrdersPage = () => {
       setReceiptLoading(true);
       setDownloadStatus('Starting download...');
       
-      console.log('Making PDF API call for order:', orderId);
       const response = await ordersAPI.printOrderReceiptPDF(orderId, {
         responseType: 'blob'
       });
       
-      console.log('PDF API response received');
       setDownloadStatus('Creating PDF file...');
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -584,7 +507,6 @@ const OrdersPage = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      console.log('PDF download completed');
       setDownloadStatus('PDF downloaded successfully!');
       alert('PDF downloaded successfully!');
       
@@ -656,10 +578,7 @@ const OrdersPage = () => {
       pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
       completed: 'bg-green-100 text-green-800 border border-green-200',
       failed: 'bg-red-100 text-red-800 border border-red-200',
-      refunded: 'bg-purple-100 text-purple-800 border border-purple-200',
-      partially_refunded: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-      processing: 'bg-blue-100 text-blue-800 border border-blue-200',
-      cancelled: 'bg-red-100 text-red-800 border border-red-200'
+      refunded: 'bg-purple-100 text-purple-800 border border-purple-200'
     };
     
     return (
@@ -695,7 +614,6 @@ const OrdersPage = () => {
   const pendingOrders = orders.filter(order => order.orderStatus === 'pending').length;
   const deliveredOrders = orders.filter(order => order.orderStatus === 'delivered' || order.orderStatus === 'completed').length;
   const cancelledOrders = orders.filter(order => order.orderStatus === 'cancelled').length;
-  const refundedOrders = orders.filter(order => order.paymentStatus === 'refunded' || order.paymentStatus === 'partially_refunded').length;
 
   const ReceiptModal = ({ order, onClose, onPrint, onDownloadPDF }) => {
     if (!order) return null;
@@ -785,7 +703,7 @@ const OrdersPage = () => {
                 <div className="mt-2 pt-2 border-t text-xs sm:text-sm">
                   <div className="font-medium text-gray-600">Shipping:</div>
                   <div className="text-gray-500 truncate">
-                    {shippingAddress.address}, {shippingAddress.city}
+                    {shippingAddress.street}, {shippingAddress.city}
                   </div>
                 </div>
               )}
@@ -800,9 +718,13 @@ const OrdersPage = () => {
                   <div key={item._id || index} className="flex justify-between items-center p-1.5 hover:bg-gray-50 rounded border border-gray-100">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-xs sm:text-sm truncate">{item.product?.name || item.name}</div>
+                      {item.variantName && (
+                        <div className="text-xs text-gray-500">{item.variantName}</div>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-xs sm:text-sm">{formatCurrency((item.price || 0) * (item.quantity || 1))}</div>
+                      <div className="text-xs text-gray-500">{item.quantity} × {formatCurrency(item.price || 0)}</div>
                     </div>
                   </div>
                 ))}
@@ -862,7 +784,6 @@ const OrdersPage = () => {
                 <span>📥</span>
                 {receiptLoading ? '...' : 'PDF'}
               </button>
-           
             </div>
           </div>
         </div>
@@ -921,7 +842,7 @@ const OrdersPage = () => {
     );
   }
 
-  if (error) {
+  if (error && !error.includes('✅')) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
@@ -945,13 +866,11 @@ const OrdersPage = () => {
       <Sidebar />
       
       <div className="flex-1 w-full">
-        {/* Header */}
         <header className="bg-white shadow sticky top-0 z-10">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-800">Orders Management</h1>
             </div>
-
             <div className="flex items-center">
               <button
                 onClick={logout}
@@ -967,7 +886,6 @@ const OrdersPage = () => {
 
         <main className="p-4 sm:p-6">
           <div className="mb-6 flex flex-col space-y-4">
-            {/* Top row with title and buttons */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-700 flex items-center">
                 <FaTag className="mr-2 text-[#996600]" />
@@ -988,11 +906,9 @@ const OrdersPage = () => {
               </div>
             </div>
 
-            {/* Filter and Sort Section */}
             <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
               <div className="flex flex-col space-y-3">
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                  {/* Search Input */}
                   <div className="flex-1">
                     <input
                       type="text"
@@ -1003,7 +919,6 @@ const OrdersPage = () => {
                     />
                   </div>
 
-                  {/* Status Filter Dropdown */}
                   <div className="relative flex-1">
                     <button
                       onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
@@ -1036,7 +951,6 @@ const OrdersPage = () => {
                     )}
                   </div>
 
-                  {/* Sort Dropdown */}
                   <div className="relative flex-1">
                     <button
                       onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
@@ -1094,7 +1008,6 @@ const OrdersPage = () => {
                     )}
                   </div>
 
-                  {/* Clear Filters Button */}
                   {(selectedStatus !== 'all' || sortOption !== 'newest' || searchTerm) && (
                     <button
                       onClick={clearFilters}
@@ -1118,7 +1031,6 @@ const OrdersPage = () => {
             </div>
           )}
 
-          {/* Stats Cards - Responsive Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center">
@@ -1165,19 +1077,18 @@ const OrdersPage = () => {
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Refunded Orders</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 mt-1 sm:mt-2">{refundedOrders}</p>
+                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Cancelled Orders</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1 sm:mt-2">{cancelledOrders}</p>
                 </div>
-                <div className="p-1 sm:p-2 bg-purple-50 rounded-lg">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">R</span>
+                <div className="p-1 sm:p-2 bg-red-50 rounded-lg">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">C</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Orders Table */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {!Array.isArray(orders) ? (
               <div className="text-center py-8">
@@ -1214,7 +1125,6 @@ const OrdersPage = () => {
               </div>
             ) : (
               <>
-                {/* Mobile View - Card Layout */}
                 {isMobile ? (
                   <div className="p-2">
                     <div className="space-y-4">
@@ -1223,12 +1133,11 @@ const OrdersPage = () => {
                         const orderId = getOrderId(order);
                         const isRefundableOrder = isRefundable(order);
                         const currentRefundStatus = refundStatus[order._id];
-                        const statusOptions = getStatusOptions(order.orderStatus);
-                        const paymentStatusOptions = getPaymentStatusOptions(order.paymentStatus);
+                        const statusOptionsList = getStatusOptions(order.orderStatus);
+                        const paymentStatusOptionsList = getPaymentStatusOptions(order.paymentStatus);
                         
                         return (
                           <div key={order._id || order.id} className="bg-white rounded-lg shadow border border-gray-200 p-4">
-                            {/* Order Header */}
                             <div className="flex justify-between items-start mb-3">
                               <div className="flex items-center space-x-3">
                                 <div className="text-sm font-medium text-gray-500">#{index + 1}</div>
@@ -1251,7 +1160,6 @@ const OrdersPage = () => {
                               </div>
                             </div>
                             
-                            {/* Customer Info */}
                             <div className="mb-3">
                               <div className="flex items-center">
                                 <p className="text-sm font-medium text-gray-900">
@@ -1268,7 +1176,15 @@ const OrdersPage = () => {
                               </p>
                             </div>
                             
-                            {/* Status & Payment Grid */}
+                            {order.wardName && (
+                              <div className="mb-2">
+                                <p className="text-xs text-gray-500">Ward</p>
+                                <p className="text-sm font-medium text-gray-900">
+                                  Ward {order.wardId}: {order.wardName}
+                                </p>
+                              </div>
+                            )}
+                            
                             <div className="grid grid-cols-2 gap-3 mb-3">
                               <div>
                                 <p className="text-xs text-gray-500">Payment</p>
@@ -1279,12 +1195,11 @@ const OrdersPage = () => {
                               <div>
                                 <p className="text-xs text-gray-500">Items</p>
                                 <p className="text-sm font-medium text-gray-900">
-                                  {order.items ? order.items.length : order.products?.length || 0} items
+                                  {order.products?.length || 0} items
                                 </p>
                               </div>
                             </div>
                             
-                            {/* Status Update (Admin Only) */}
                             {userRole === 'admin' && (
                               <>
                                 <div className="mb-2">
@@ -1299,7 +1214,7 @@ const OrdersPage = () => {
                                         : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
                                     }`}
                                   >
-                                    {statusOptions.map(option => (
+                                    {statusOptionsList.map(option => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
                                       </option>
@@ -1319,7 +1234,7 @@ const OrdersPage = () => {
                                         : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
                                     }`}
                                   >
-                                    {paymentStatusOptions.map(option => (
+                                    {paymentStatusOptionsList.map(option => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
                                       </option>
@@ -1334,7 +1249,6 @@ const OrdersPage = () => {
                               </>
                             )}
                             
-                            {/* Actions */}
                             <div className="flex space-x-2 pt-2 border-t border-gray-100">
                               <button
                                 onClick={() => fetchOrderReceipt(orderId)}
@@ -1362,21 +1276,21 @@ const OrdersPage = () => {
                                   disabled={refundLoading && activeRefundOrderId === order._id}
                                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition duration-200 ${
                                     refundLoading && activeRefundOrderId === order._id
-                                      ? 'bg-gradient-to-r from-red-300 to-red-300 text-white cursor-not-allowed'
-                                      : 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
+                                      ? 'bg-gradient-to-r from-green-400 to-green-500 text-white cursor-not-allowed'
+                                      : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
                                   }`}
                                 >
                                   {refundLoading && activeRefundOrderId === order._id ? 'Processing...' : 'Refund'}
                                 </button>
                               ) : (
                                 <div className="flex-1">
-                                  {order.paymentStatus === 'refunded' ? (
+                                  {order.refundStatus === 'completed' ? (
+                                    <span className="block px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200 text-center">
+                                      ✅ Refunded
+                                    </span>
+                                  ) : order.paymentStatus === 'refunded' ? (
                                     <span className="block px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200 text-center">
                                       Refunded
-                                    </span>
-                                  ) : order.paymentStatus === 'partially_refunded' ? (
-                                    <span className="block px-3 py-2 bg-blue-100 text-blue-800 text-sm rounded-lg border border-blue-200 text-center">
-                                      Partial
                                     </span>
                                   ) : (
                                     <span className="block px-3 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg border border-gray-200 text-center">
@@ -1387,7 +1301,6 @@ const OrdersPage = () => {
                               )}
                             </div>
                             
-                            {/* Refund Status Message */}
                             {currentRefundStatus && (
                               <div className={`mt-2 px-3 py-2 text-xs rounded-lg text-center ${
                                 currentRefundStatus.status === 'success' ? 'bg-green-100 text-green-800' :
@@ -1403,7 +1316,6 @@ const OrdersPage = () => {
                     </div>
                   </div>
                 ) : (
-                  /* Desktop View - Table Layout */
                   <div className="overflow-x-auto">
                     <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-500">
                       ← Scroll horizontally to see all columns →
@@ -1432,8 +1344,8 @@ const OrdersPage = () => {
                           const orderId = getOrderId(order);
                           const isRefundableOrder = isRefundable(order);
                           const currentRefundStatus = refundStatus[order._id];
-                          const statusOptions = getStatusOptions(order.orderStatus);
-                          const paymentStatusOptions = getPaymentStatusOptions(order.paymentStatus);
+                          const statusOptionsList = getStatusOptions(order.orderStatus);
+                          const paymentStatusOptionsList = getPaymentStatusOptions(order.paymentStatus);
                           
                           return (
                             <tr key={order._id || order.id} className="hover:bg-gray-50 transition-colors">
@@ -1459,12 +1371,12 @@ const OrdersPage = () => {
                                 <div className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">
                                   {customer.email}
                                 </div>
-                              </td>
+                               </td>
                               <td className="px-3 py-4 whitespace-nowrap">
                                 <div className="text-xs sm:text-sm text-gray-900">
                                   {formatDate(order.createdAt || order.orderDate || order.date)}
                                 </div>
-                              </td>
+                               </td>
                             
                               <td className="px-3 py-4 whitespace-nowrap">
                                 {userRole === 'admin' ? (
@@ -1479,12 +1391,8 @@ const OrdersPage = () => {
                                           : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
                                       }`}
                                     >
-                                      {statusOptions.map(option => (
-                                        <option 
-                                          key={option.value} 
-                                          value={option.value}
-                                          className={`text-${option.color}-700`}
-                                        >
+                                      {statusOptionsList.map(option => (
+                                        <option key={option.value} value={option.value}>
                                           {option.label}
                                         </option>
                                       ))}
@@ -1493,7 +1401,7 @@ const OrdersPage = () => {
                                 ) : (
                                   getStatusBadge(order.orderStatus)
                                 )}
-                              </td>
+                                </td>
                               
                               <td className="px-3 py-4 whitespace-nowrap">
                                 {userRole === 'admin' ? (
@@ -1508,12 +1416,8 @@ const OrdersPage = () => {
                                           : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
                                       }`}
                                     >
-                                      {paymentStatusOptions.map(option => (
-                                        <option 
-                                          key={option.value} 
-                                          value={option.value}
-                                          className={`text-${option.color}-700`}
-                                        >
+                                      {paymentStatusOptionsList.map(option => (
+                                        <option key={option.value} value={option.value}>
                                           {option.label}
                                         </option>
                                       ))}
@@ -1530,21 +1434,17 @@ const OrdersPage = () => {
                                     )}
                                   </div>
                                 ) : (
-                                  getPaymentStatusBadge(
-                                    order.paymentStatus || 
-                                    order.payment?.status || 
-                                    (order.paymentId ? 'completed' : 'pending')
-                                  )
+                                  getPaymentStatusBadge(order.paymentStatus)
                                 )}
-                              </td>
+                                </td>
                               <td className="px-3 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-900">
-                                  {order.items ? order.items.length : order.products?.length || 0} items
+                                  {order.products?.length || 0} items
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   {formatCurrency(order.finalAmount || order.totalAmount || 0)}
                                 </div>
-                              </td>
+                                </td>
                               <td className="px-3 py-4 whitespace-nowrap">
                                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                                   <button
@@ -1575,8 +1475,8 @@ const OrdersPage = () => {
                                         disabled={refundLoading && activeRefundOrderId === order._id}
                                         className={`px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm rounded transition-colors whitespace-nowrap flex items-center justify-center gap-1 min-w-[70px] ${
                                           refundLoading && activeRefundOrderId === order._id
-                                            ? 'bg-gradient-to-r from-red-300 to-red-300 text-white cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
+                                            ? 'bg-gradient-to-r from-green-400 to-green-500 text-white cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
                                         }`}
                                         title="Refund cancelled order"
                                       >
@@ -1605,42 +1505,27 @@ const OrdersPage = () => {
                                     </div>
                                   ) : (
                                     <>
-                                      {order.orderStatus === 'cancelled' && order.paymentStatus === 'completed' && !order.paymentId && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm rounded border border-gray-200 whitespace-nowrap text-center" title="Cannot refund: Missing payment ID">
-                                          No Payment ID
+                                      {order.refundStatus === 'completed' && (
+                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-green-100 text-green-800 text-xs sm:text-sm rounded border border-green-200 whitespace-nowrap text-center">
+                                          ✅ Refunded
+                                        </span>
+                                      )}
+                                      {order.orderStatus === 'cancelled' && order.paymentStatus === 'completed' && order.refundStatus !== 'completed' && (
+                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm rounded border border-gray-200 whitespace-nowrap text-center">
+                                          Manual Refund
                                         </span>
                                       )}
                                       
-                                      {order.orderStatus === 'cancelled' && order.paymentStatus !== 'completed' && order.paymentStatus !== 'partially_refunded' && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm rounded border border-gray-200 whitespace-nowrap text-center" title={`Cannot refund: Payment status is ${order.paymentStatus}`}>
-                                          Not Paid
-                                        </span>
-                                      )}
-                                      
-                                      {order.orderStatus !== 'cancelled' && order.paymentStatus === 'completed' && (
+                                      {order.orderStatus !== 'cancelled' && order.refundStatus !== 'completed' && (
                                         <span className="px-2 py-1 sm:px-3 sm:py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm rounded border border-blue-200 whitespace-nowrap text-center">
-                                          {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
-                                        </span>
-                                      )}
-                                      
-                                      {order.paymentStatus === 'refunded' && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-green-100 text-green-800 text-xs sm:text-sm rounded border border-green-200 whitespace-nowrap text-center flex items-center gap-1">
-                                          <span>✅</span>
-                                          Refunded
-                                        </span>
-                                      )}
-                                      
-                                      {order.paymentStatus === 'partially_refunded' && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm rounded border border-blue-200 whitespace-nowrap text-center flex items-center gap-1">
-                                          <span>↩️</span>
-                                          Partial
+                                          {order.orderStatus?.charAt(0).toUpperCase() + order.orderStatus?.slice(1)}
                                         </span>
                                       )}
                                     </>
                                   )}
                                 </div>
-                              </td>
-                              </tr>
+                                </td>
+                            </tr>
                           );
                         })}
                       </tbody>
