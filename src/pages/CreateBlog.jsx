@@ -295,7 +295,7 @@ const CreateBlog = () => {
 
               {/* Description - REQUIRED */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Description * <span className="text-red-500">(Required)</span>
                 </label>
                 <textarea
