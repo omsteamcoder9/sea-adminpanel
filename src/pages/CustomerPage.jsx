@@ -1,4 +1,4 @@
-// src/pages/CustomerPage.jsx
+// src/pages/CustomerPage.jsx (Updated)
 import React, { useState, useEffect } from 'react';
 import { 
   Users, 
@@ -11,8 +11,10 @@ import {
   Shield,
   User,
   RefreshCw,
-  UserPlus,
   LogOut,
+  Edit,
+  Eye,
+  MoreVertical
 } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import CustomerDetailsModal from '../components/CustomerDetailsModal';
@@ -31,10 +33,14 @@ const CustomerPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isGuestToggleModalOpen, setIsGuestToggleModalOpen] = useState(false);
   const [customerToAction, setCustomerToAction] = useState(null);
-  const [actionType, setActionType] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 100
+  });
 
   // Check mobile screen size
   useEffect(() => {
@@ -57,11 +63,56 @@ const CustomerPage = () => {
         setLoading(true);
       }
       
-      const response = await adminAPI.getAllUsers();
-      setCustomers(response.data);
-      setFilteredCustomers(response.data);
+      const response = await adminAPI.getAllUsers({ limit: 100 });
+      console.log('Full API Response:', response);
+      
+      // Handle different response structures from your backend
+      let customersData = [];
+      let paginationData = {};
+      
+      // Check response structure
+      if (response.data) {
+        // Structure: { success: true, data: { users: [], pagination: {} } }
+        if (response.data.success && response.data.data) {
+          if (response.data.data.users) {
+            customersData = response.data.data.users;
+            paginationData = response.data.data.pagination || {};
+          } else if (Array.isArray(response.data.data)) {
+            customersData = response.data.data;
+          } else {
+            customersData = response.data.data;
+          }
+        }
+        // Structure: { success: true, data: { users: [] } }
+        else if (response.data.success && response.data.data?.users) {
+          customersData = response.data.data.users;
+          paginationData = response.data.data.pagination || {};
+        }
+        // Structure: { data: [] }
+        else if (Array.isArray(response.data.data)) {
+          customersData = response.data.data;
+        }
+        // Structure: just an array
+        else if (Array.isArray(response.data)) {
+          customersData = response.data;
+        }
+      }
+      
+      console.log('Extracted customers:', customersData);
+      console.log('Number of customers:', customersData.length);
+      
+      setCustomers(customersData);
+      setFilteredCustomers(customersData);
+      setPagination({
+        currentPage: paginationData.currentPage || 1,
+        totalPages: paginationData.totalPages || 1,
+        totalItems: paginationData.totalItems || customersData.length,
+        itemsPerPage: paginationData.itemsPerPage || 100
+      });
     } catch (error) {
       console.error('Error fetching customers:', error);
+      console.error('Error response:', error.response?.data);
+      alert(error.response?.data?.message || 'Failed to fetch customers');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,25 +130,26 @@ const CustomerPage = () => {
 
   // Search and filter logic
   useEffect(() => {
-    let results = customers;
+    let results = [...customers];
 
     if (searchTerm) {
       results = results.filter(customer =>
-        customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (customer.phoneNumber && customer.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     if (selectedType !== 'all') {
-      if (selectedType === 'guest') {
-        results = results.filter(customer => customer.isGuest);
-      } else if (selectedType === 'registered') {
-        results = results.filter(customer => !customer.isGuest);
-      } else if (selectedType === 'admin') {
+      if (selectedType === 'admin') {
         results = results.filter(customer => customer.role === 'admin');
       } else if (selectedType === 'user') {
         results = results.filter(customer => customer.role === 'user');
+      } else if (selectedType === 'active') {
+        results = results.filter(customer => customer.isActive === true);
+      } else if (selectedType === 'inactive') {
+        results = results.filter(customer => customer.isActive === false);
       }
     }
 
@@ -105,65 +157,32 @@ const CustomerPage = () => {
   }, [searchTerm, selectedType, customers]);
 
   // Handle customer deletion
-const handleDelete = async () => {
-  
-  if (!customerToAction) return;
-  console.log('customerToAction on delete:', customerToAction);
-
-  console.log('=== DELETE BUTTON CLICKED ===');
-  console.log('Customer to delete:', customerToAction);
-  console.log('Customer ID:', customerToAction._id);
-  console.log('User role:', customerToAction.role); // Check if it's admin
-
-  try {
-    console.log('Sending delete request for ID:', customerToAction._id);
-    const response = await adminAPI.deleteUser(customerToAction._id);
-    console.log('Delete response success:', response);
-    
-    setCustomers(prev => prev.filter(c => c._id !== customerToAction._id));
-    setIsDeleteModalOpen(false);
-    setCustomerToAction(null);
-  } catch (error) {
-    console.log('=== DELETE ERROR ===');
-    console.log('Error object:', error);
-    console.log('Error response:', error.response);
-    console.log('Error status:', error.response?.status);
-    console.log('Error data:', error.response?.data);
-    console.log('Error message:', error.message);
-  }
-};
-
-  // Handle guest status toggle
-  const handleGuestToggle = async () => {
+  const handleDelete = async () => {
     if (!customerToAction) return;
-
+    
+    console.log('Deleting customer:', customerToAction._id);
+    
     try {
-      await adminAPI.editUser(customerToAction._id, { 
-        isGuest: !customerToAction.isGuest 
-      });
+      await adminAPI.deleteUser(customerToAction._id);
       
-      setCustomers(prev => prev.map(c => 
-        c._id === customerToAction._id 
-          ? { ...c, isGuest: !c.isGuest }
-          : c
-      ));
-      setIsGuestToggleModalOpen(false);
+      // Remove from local state
+      setCustomers(prev => prev.filter(c => c._id !== customerToAction._id));
+      setIsDeleteModalOpen(false);
       setCustomerToAction(null);
+      
+      // Show success message
+      alert('User deleted successfully');
     } catch (error) {
-      console.error('Error updating guest status:', error);
+      console.error('Delete error:', error);
+      alert(error.response?.data?.message || 'Failed to delete user');
     }
   };
 
   // Open modals
-  const openDeleteModal = (customer) => {
+  const openDeleteModal = (customer, e) => {
+    if (e) e.stopPropagation();
     setCustomerToAction(customer);
     setIsDeleteModalOpen(true);
-  };
-
-  const openGuestToggleModal = (customer) => {
-    setCustomerToAction(customer);
-    setActionType(customer.isGuest ? 'makeRegistered' : 'makeGuest');
-    setIsGuestToggleModalOpen(true);
   };
 
   const openDetailsModal = (customer) => {
@@ -171,38 +190,37 @@ const handleDelete = async () => {
     setIsDetailsModalOpen(true);
   };
 
-  // Get user type badge
-  const getUserTypeBadge = (isGuest) => {
-    if (isGuest) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-          <User className="w-3 h-3 mr-1" />
-          Guest
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#996600]/10 text-[#996600] border border-[#996600]/20">
-        <Users className="w-3 h-3 mr-1" />
-        Registered
-      </span>
-    );
-  };
-
   // Get role badge
   const getRoleBadge = (role) => {
     const roleConfig = {
-      admin: { bg: 'bg-red-100', text: 'text-red-800', label: 'Admin' },
-      user: { bg: 'bg-green-100', text: 'text-green-800', label: 'User' },
-      guest: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Guest' }
+      admin: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Admin' },
+      user: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'User' }
     };
     
     const config = roleConfig[role] || roleConfig.user;
     
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
         <Shield className="w-3 h-3 mr-1" />
         {config.label}
+      </span>
+    );
+  };
+
+  // Get status badge
+  const getStatusBadge = (isActive) => {
+    if (isActive) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="w-1.5 h-1.5 bg-green-600 rounded-full mr-1"></span>
+          Active
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <span className="w-1.5 h-1.5 bg-gray-600 rounded-full mr-1"></span>
+        Inactive
       </span>
     );
   };
@@ -218,11 +236,14 @@ const handleDelete = async () => {
   };
 
   // Mobile Card View Component
-  const CustomerCard = ({ customer, index }) => (
-    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
+  const CustomerCard = ({ customer }) => (
+    <div 
+      className="bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-4 cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={() => openDetailsModal(customer)}
+    >
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#996600] to-[#7a5200] rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-12 h-12 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-full flex items-center justify-center text-white font-semibold text-lg">
             {customer.name?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div>
@@ -230,32 +251,25 @@ const handleDelete = async () => {
               {customer.name || 'Unnamed User'}
             </h3>
             <div className="flex items-center gap-2 mt-1">
-              {getUserTypeBadge(customer.isGuest)}
               {getRoleBadge(customer.role)}
+              {getStatusBadge(customer.isActive)}
             </div>
           </div>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div>
-          <p className="text-xs text-gray-500">Email</p>
-          <p className="text-sm text-gray-900 truncate">{customer.email}</p>
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center gap-2 text-sm">
+          <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <span className="text-gray-700 truncate">{customer.email || '-'}</span>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Phone</p>
-          <p className="text-sm text-gray-900">{customer.phone || 'N/A'}</p>
+        <div className="flex items-center gap-2 text-sm">
+          <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <span className="text-gray-700">{customer.phoneNumber || customer.phone || '-'}</span>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Joined</p>
-          <div className="flex items-center gap-1 text-sm text-slate-600">
-            <Calendar className="w-3 h-3" />
-            {formatDate(customer.createdAt)}
-          </div>
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">User ID</p>
-          <p className="text-xs text-gray-500 font-mono">{customer._id?.substring(0, 8)}...</p>
+        <div className="flex items-center gap-2 text-sm">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <span className="text-gray-700">Joined: {formatDate(customer.createdAt)}</span>
         </div>
       </div>
       
@@ -264,28 +278,9 @@ const handleDelete = async () => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            openGuestToggleModal(customer);
+            openDeleteModal(customer, e);
           }}
-          className="flex-1 bg-gradient-to-r from-[#996600] to-[#7a5200] hover:from-[#7a5200] hover:to-[#664200] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center gap-2"
-        >
-          {customer.isGuest ? (
-            <>
-              <Users size={16} />
-              <span>Make Registered</span>
-            </>
-          ) : (
-            <>
-              <User size={16} />
-              <span>Make Guest</span>
-            </>
-          )}
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            openDeleteModal(customer);
-          }}
-          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center gap-2"
+          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-200 flex items-center justify-center gap-2"
         >
           <Trash2 size={16} />
           <span>Delete</span>
@@ -298,8 +293,11 @@ const handleDelete = async () => {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#996600]"></div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff0000] mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading customers...</p>
+          </div>
         </div>
       </div>
     );
@@ -308,101 +306,119 @@ const handleDelete = async () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 w-full">
+      
+      <div className="flex-1 w-full overflow-x-hidden">
         {/* Header */}
-        <header className="bg-white shadow">
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* Left side: Title */}
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-800">Customers Management</h1>
+        <header className="bg-white shadow-sm sticky top-0 z-10">
+          <div className="flex items-center justify-between px-4 py-4 md:px-6">
+            <div className="flex items-center gap-3">
+              <Users className="w-6 h-6 text-[#ff0000]" />
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">Customer Management</h1>
             </div>
-
-            {/* Right side: Logout button */}
-            <div className="flex items-center">
-              <button
-                onClick={logout}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center"
-                title="Logout"
-              >
-                <span className="hidden sm:inline mr-2">Logout</span>
-                <LogOut size={18} />
-              </button>
-            </div>
+            <button
+              onClick={logout}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2"
+            >
+              <LogOut size={18} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
-
-        {/* Main Content */}
-        <main className="p-4 sm:p-6">
-          {/* Action Bar - Refresh Button (Always visible) */}
-          <div className="mb-4 flex justify-end">
+            {/* Refresh Button */}
+          <div className="mb-4 flex justify-end mt-3">
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refresh customers"
+              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm disabled:opacity-50 gap-2"
             >
-              <RefreshCw size={16} className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
           </div>
+        
 
-          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-700">
-              All Customers ({customers.length})
-            </h2>
-            {/* Add Customer Button (if you have that feature) */}
-            {/*
-            <button
-              onClick={() => {/* Open add customer modal *\/}
-              className="flex-1 sm:flex-none bg-gradient-to-r from-[#996600] to-[#7a5200] hover:from-[#7a5200] hover:to-[#664200] text-white px-4 py-3 sm:py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px] gap-2"
-            >
-              <UserPlus size={16} />
-              <span>Add Customer</span>
-            </button>
-            */}
-          </div>
-
-          {/* Filters and Search */}
-          <div className="mb-6 bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm">
+                  {/* Filters and Search */}
+          <div className="mb-6 bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 md:w-5 md:h-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
                   <input
                     type="text"
-                    placeholder="Search customers by name, email, or phone..."
+                    placeholder="Search by name, email, or phone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-transparent text-sm md:text-base"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm md:text-base"
                   />
                 </div>
               </div>
+              
 
               {/* Type Filter */}
               <div className="flex items-center gap-2">
-                <Filter className="text-slate-400 w-4 h-4 md:w-5 md:h-5" />
+                <Filter className="text-gray-400 w-4 h-4 md:w-5 md:h-5" />
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-2 py-2 md:px-3 md:py-2.5 focus:outline-none focus:ring-2 focus:ring-[#996600] text-sm md:text-base w-full md:w-auto"
+                  className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ff0000] text-sm md:text-base"
                 >
                   <option value="all">All Users</option>
-                  <option value="registered">Registered</option>
-                  <option value="guest">Guest</option>
-                  <option value="admin">Admins</option>
-                  <option value="user">Regular Users</option>
+                  <option value="admin">Admins Only</option>
+                  <option value="user">Regular Users Only</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
                 </select>
               </div>
+              
             </div>
+          </div>
+
+        {/* Main Content */}
+        <main className="p-4 md:p-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-sm text-gray-500">Total Users</p>
+              <p className="text-2xl font-bold text-gray-800">{customers.length}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-sm text-gray-500">Active Users</p>
+              <p className="text-2xl font-bold text-green-600">
+                {customers.filter(c => c.isActive).length}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-sm text-gray-500">Admins</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {customers.filter(c => c.role === 'admin').length}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-sm text-gray-500">Regular Users</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {customers.filter(c => c.role === 'user').length}
+              </p>
+            </div>
+          </div>
+
+      
+
+
+
+          {/* Results Count */}
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">
+              Showing {filteredCustomers.length} of {customers.length} customers
+            </p>
           </div>
 
           {/* Customer Table/Cards Display */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {filteredCustomers.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No customers found</h3>
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium text-gray-900">No customers found</h3>
                 <p className="mt-1 text-sm text-gray-500">
                   Try adjusting your search or filter
                 </p>
@@ -415,22 +431,22 @@ const handleDelete = async () => {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Customer
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Contact
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Joined
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            User Type
-                          </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Role
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
@@ -439,62 +455,59 @@ const handleDelete = async () => {
                         {filteredCustomers.map((customer) => (
                           <tr 
                             key={customer._id} 
-                            className="hover:bg-slate-50 transition-colors cursor-pointer"
+                            className="hover:bg-gray-50 transition-colors cursor-pointer"
                             onClick={() => openDetailsModal(customer)}
                           >
-                            <td className="py-4 px-4 md:px-6">
+                            <td className="py-4 px-6">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-[#996600] to-[#7a5200] rounded-full flex items-center justify-center text-white font-semibold text-sm md:text-base">
+                                <div className="w-10 h-10 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-full flex items-center justify-center text-white font-semibold">
                                   {customer.name?.charAt(0).toUpperCase() || 'U'}
                                 </div>
                                 <div>
-                                  <p className="font-medium text-slate-800 text-sm md:text-base">{customer.name || 'Unnamed User'}</p>
-                                  <p className="text-xs md:text-sm text-slate-500">ID: {customer._id?.substring(0, 8)}...</p>
+                                  <p className="font-medium text-gray-900">{customer.name || 'Unnamed User'}</p>
+                                  <p className="text-xs text-gray-500">ID: {customer._id?.slice(-6)}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-4 md:px-6">
+                            <td className="py-4 px-6">
                               <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <Mail className="w-3 h-3 md:w-4 md:h-4 text-slate-400" />
-                                  <span className="text-xs md:text-sm truncate max-w-[150px]">{customer.email}</span>
-                                </div>
-                                {customer.phone ? (
+                                {customer.email && (
                                   <div className="flex items-center gap-2">
-                                    <Phone className="w-3 h-3 md:w-4 md:h-4 text-slate-400" />
-                                    <span className="text-xs md:text-sm">{customer.phone}</span>
+                                    <Mail className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600 truncate max-w-[200px]">{customer.email}</span>
                                   </div>
-                                ) : (
-                                  <div className="text-xs text-slate-400">No phone</div>
+                                )}
+                                {(customer.phoneNumber || customer.phone) && (
+                                  <div className="flex items-center gap-2">
+                                    <Phone className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600">{customer.phoneNumber || customer.phone}</span>
+                                  </div>
                                 )}
                               </div>
                             </td>
-                            <td className="py-4 px-4 md:px-6">
-                              <div className="flex items-center gap-2 text-xs md:text-sm text-slate-600">
-                                <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Calendar className="w-4 h-4" />
                                 {formatDate(customer.createdAt)}
                               </div>
                             </td>
-                            <td className="py-4 px-4 md:px-6">
-                              {getUserTypeBadge(customer.isGuest)}
-                            </td>
-                            <td className="py-4 px-4 md:px-6">
+                            <td className="py-4 px-6">
                               {getRoleBadge(customer.role)}
                             </td>
-                            <td className="py-4 px-4 md:px-6">
-                              <div className="flex items-center gap-2">
-                            
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openDeleteModal(customer);
-                                  }}
-                                  className="p-1.5 md:p-2 text-red-600 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 transition-all duration-200"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
+                            <td className="py-4 px-6">
+                              {getStatusBadge(customer.isActive)}
+                            </td>
+                            <td className="py-4 px-6">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDeleteModal(customer, e);
+                                }}
+                                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200 flex items-center gap-2"
+                              >
+                                <Trash2 size={16} />
+                                Delete
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -503,14 +516,9 @@ const handleDelete = async () => {
                   </div>
                 ) : (
                   /* Mobile Card View */
-                  <div className="p-1">
-                    {filteredCustomers.map((customer, index) => (
-                      <div 
-                        key={customer._id}
-                        onClick={() => openDetailsModal(customer)}
-                      >
-                        <CustomerCard customer={customer} index={index} />
-                      </div>
+                  <div className="p-4">
+                    {filteredCustomers.map((customer) => (
+                      <CustomerCard key={customer._id} customer={customer} />
                     ))}
                   </div>
                 )}
@@ -524,36 +532,21 @@ const handleDelete = async () => {
           <CustomerDetailsModal
             customer={selectedCustomer}
             onClose={() => setIsDetailsModalOpen(false)}
-            onGuestToggle={openGuestToggleModal}
             onDelete={openDeleteModal}
           />
         )}
 
         {/* Delete Confirmation Modal */}
-       {isDeleteModalOpen && customerToAction && (
-  <ConfirmationModal
-    isOpen={isDeleteModalOpen}
-    title="Delete Customer"
-    message={`Are you sure you want to delete ${customerToAction.name}?`}
-    confirmText="Delete"
-    cancelText="Cancel"
-    onConfirm={handleDelete}
-    onClose={() => setIsDeleteModalOpen(false)}
-    type="danger"
-  />
-)}
-
-        {/* Guest/Registered Toggle Modal */}
-        {isGuestToggleModalOpen && customerToAction && (
+        {isDeleteModalOpen && customerToAction && (
           <ConfirmationModal
-            title={actionType === 'makeGuest' ? 'Convert to Guest User' : 'Convert to Registered User'}
-            message={`Are you sure you want to convert ${customerToAction.name} to ${actionType === 'makeGuest' ? 'a guest user' : 'a registered user'}?`}
-            confirmText={actionType === 'makeGuest' ? 'Make Guest' : 'Make Registered'}
+            isOpen={isDeleteModalOpen}
+            title="Delete Customer"
+            message={`Are you sure you want to delete ${customerToAction.name || 'this user'}?`}
+            confirmText="Delete"
             cancelText="Cancel"
-            onConfirm={handleGuestToggle}
-            onCancel={() => setIsGuestToggleModalOpen(false)}
-            type={actionType === 'makeGuest' ? 'warning' : 'info'}
-            icon={actionType === 'makeGuest' ? <User className="w-6 h-6" /> : <Users className="w-6 h-6" />}
+            onConfirm={handleDelete}
+            onClose={() => setIsDeleteModalOpen(false)}
+            type="danger"
           />
         )}
       </div>

@@ -640,7 +640,7 @@ const isRefundable = (order) => {
     return (
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-2 sm:p-4 z-50">
         <div className="bg-white rounded-lg w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl">
-          <div className="bg-gradient-to-r from-[#996600] to-[#7a5200] text-white p-3 sm:p-4 flex justify-between items-center">
+          <div className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white p-3 sm:p-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-sm">🛒</div>
               <div>
@@ -731,7 +731,7 @@ const isRefundable = (order) => {
               </div>
             </div>
 
-            <div className="bg-[#996600]/10 p-3 sm:p-4 rounded border border-[#996600]/20">
+            <div className="bg-[#ff0000]/10 p-3 sm:p-4 rounded border border-[#ff0000]/20">
               <div className="space-y-1.5">
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="text-gray-700">Subtotal:</span>
@@ -745,9 +745,9 @@ const isRefundable = (order) => {
                   <span className="text-gray-700">Tax:</span>
                   <span className="font-semibold">{formatCurrency(tax)}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#996600]/30 font-bold text-base sm:text-lg">
+                <div className="flex justify-between pt-2 border-t border-[#ff0000]/30 font-bold text-base sm:text-lg">
                   <span>TOTAL:</span>
-                  <span className="text-[#996600]">{formatCurrency(total)}</span>
+                  <span className="text-[#ff0000]">{formatCurrency(total)}</span>
                 </div>
               </div>
             </div>
@@ -835,7 +835,7 @@ const isRefundable = (order) => {
         <Sidebar />
         <div className="flex-1 p-4 sm:p-6 bg-gray-50">
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-[#996600]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-[#ff0000]"></div>
           </div>
         </div>
       </div>
@@ -888,7 +888,7 @@ const isRefundable = (order) => {
           <div className="mb-6 flex flex-col space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-700 flex items-center">
-                <FaTag className="mr-2 text-[#996600]" />
+                <FaTag className="mr-2 text-[#ff0000]" />
                 All Orders ({filteredOrders.length})
               </h2>
               <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
@@ -915,14 +915,14 @@ const isRefundable = (order) => {
                       placeholder="Search by order ID, customer name, email, or phone..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-transparent text-sm"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
                     />
                   </div>
 
                   <div className="relative flex-1">
                     <button
                       onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-[#996600] focus:border-transparent transition-all duration-200"
+                      className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent transition-all duration-200"
                     >
                       <span className="truncate">
                         <Filter className="inline mr-2 text-gray-400" size={14} />
@@ -942,7 +942,7 @@ const isRefundable = (order) => {
                               setSelectedStatus(option.value);
                               setStatusDropdownOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${selectedStatus === option.value ? 'bg-[#996600]/10 text-[#996600]' : ''}`}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${selectedStatus === option.value ? 'bg-[#ff0000]/10 text-[#ff0000]' : ''}`}
                           >
                             {option.icon} {option.label}
                           </button>
@@ -954,7 +954,7 @@ const isRefundable = (order) => {
                   <div className="relative flex-1">
                     <button
                       onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-[#996600] focus:border-transparent transition-all duration-200"
+                      className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent transition-all duration-200"
                     >
                       <div className="flex items-center">
                         <FaSortAmountDown className="mr-2 text-gray-400" />
@@ -972,7 +972,7 @@ const isRefundable = (order) => {
                             setSortOption('newest');
                             setSortDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${sortOption === 'newest' ? 'bg-[#996600]/10 text-[#996600]' : ''}`}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${sortOption === 'newest' ? 'bg-[#ff0000]/10 text-[#ff0000]' : ''}`}
                         >
                           <FaSortAmountDown className="mr-2" /> Newest First
                         </button>
@@ -981,7 +981,7 @@ const isRefundable = (order) => {
                             setSortOption('oldest');
                             setSortDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${sortOption === 'oldest' ? 'bg-[#996600]/10 text-[#996600]' : ''}`}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${sortOption === 'oldest' ? 'bg-[#ff0000]/10 text-[#ff0000]' : ''}`}
                         >
                           <FaSortAmountUp className="mr-2" /> Oldest First
                         </button>
@@ -991,7 +991,7 @@ const isRefundable = (order) => {
                             setSortOption('amount-high');
                             setSortDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${sortOption === 'amount-high' ? 'bg-[#996600]/10 text-[#996600]' : ''}`}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${sortOption === 'amount-high' ? 'bg-[#ff0000]/10 text-[#ff0000]' : ''}`}
                         >
                           Amount (High to Low)
                         </button>
@@ -1000,7 +1000,7 @@ const isRefundable = (order) => {
                             setSortOption('amount-low');
                             setSortDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${sortOption === 'amount-low' ? 'bg-[#996600]/10 text-[#996600]' : ''}`}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${sortOption === 'amount-low' ? 'bg-[#ff0000]/10 text-[#ff0000]' : ''}`}
                         >
                           Amount (Low to High)
                         </button>
@@ -1038,8 +1038,8 @@ const isRefundable = (order) => {
                   <p className="text-gray-500 text-xs sm:text-sm font-medium">Total Orders</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mt-1 sm:mt-2">{totalOrders}</p>
                 </div>
-                <div className="p-1 sm:p-2 bg-[#996600]/10 rounded-lg">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-[#996600] to-[#7a5200] rounded-full flex items-center justify-center">
+                <div className="p-1 sm:p-2 bg-[#ff0000]/10 rounded-lg">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">T</span>
                   </div>
                 </div>
@@ -1096,7 +1096,7 @@ const isRefundable = (order) => {
                 <p className="text-gray-400 mt-2">Orders data is not in expected format</p>
                 <button 
                   onClick={fetchOrders}
-                  className="mt-4 px-4 py-2 bg-gradient-to-r from-[#996600] to-[#7a5200] text-white rounded hover:from-[#7a5200] hover:to-[#5a3b00]"
+                  className="mt-4 px-4 py-2 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded hover:from-[#cc0000] hover:to-[#aa0000]"
                 >
                   Retry
                 </button>
@@ -1117,7 +1117,7 @@ const isRefundable = (order) => {
                 {(selectedStatus !== 'all' || searchTerm) && (
                   <button
                     onClick={clearFilters}
-                    className="mt-4 px-4 py-2 bg-gradient-to-r from-[#996600] to-[#7a5200] text-white rounded-lg hover:from-[#7a5200] hover:to-[#5a3b00] text-sm"
+                    className="mt-4 px-4 py-2 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded-lg hover:from-[#cc0000] hover:to-[#aa0000] text-sm"
                   >
                     Clear Filters
                   </button>
@@ -1211,7 +1211,7 @@ const isRefundable = (order) => {
                                     className={`w-full text-sm border rounded-lg px-3 py-2 ${
                                       statusUpdating[order._id] 
                                         ? 'bg-gray-100 cursor-not-allowed' 
-                                        : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
+                                        : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
                                     }`}
                                   >
                                     {statusOptionsList.map(option => (
@@ -1231,7 +1231,7 @@ const isRefundable = (order) => {
                                     className={`w-full text-sm border rounded-lg px-3 py-2 ${
                                       statusUpdating[order._id] 
                                         ? 'bg-gray-100 cursor-not-allowed' 
-                                        : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
+                                        : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
                                     }`}
                                   >
                                     {paymentStatusOptionsList.map(option => (
@@ -1241,7 +1241,7 @@ const isRefundable = (order) => {
                                     ))}
                                   </select>
                                   {statusUpdating[order._id] && (
-                                    <div className="text-xs text-[#996600] mt-1">
+                                    <div className="text-xs text-[#ff0000] mt-1">
                                       Updating...
                                     </div>
                                   )}
@@ -1252,7 +1252,7 @@ const isRefundable = (order) => {
                             <div className="flex space-x-2 pt-2 border-t border-gray-100">
                               <button
                                 onClick={() => fetchOrderReceipt(orderId)}
-                                className="flex-1 bg-gradient-to-r from-[#996600] to-[#7a5200] hover:from-[#7a5200] hover:to-[#5a3b00] text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-200"
+                                className="flex-1 bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-200"
                               >
                                 View Receipt
                               </button>
@@ -1326,7 +1326,6 @@ const isRefundable = (order) => {
                         <tr>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">S.No</th>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Order ID</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Customer</th>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">
                             Order Status {userRole === 'admin' && '(Update)'}
@@ -1360,23 +1359,10 @@ const isRefundable = (order) => {
                                 </div>
                               </td>
                               <td className="px-3 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 flex items-center">
-                                  <span className="truncate max-w-[100px] sm:max-w-none">
-                                    {customer.name}
-                                  </span>
-                                  {customer.isGuest && (
-                                    <span className="ml-2 px-1 bg-gray-200 text-gray-600 text-xs rounded flex-shrink-0">Guest</span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">
-                                  {customer.email}
-                                </div>
-                               </td>
-                              <td className="px-3 py-4 whitespace-nowrap">
                                 <div className="text-xs sm:text-sm text-gray-900">
                                   {formatDate(order.createdAt || order.orderDate || order.date)}
                                 </div>
-                               </td>
+                              </td>
                             
                               <td className="px-3 py-4 whitespace-nowrap">
                                 {userRole === 'admin' ? (
@@ -1388,7 +1374,7 @@ const isRefundable = (order) => {
                                       className={`text-xs border rounded px-2 py-1 w-full max-w-[140px] ${
                                         statusUpdating[order._id] 
                                           ? 'bg-gray-100 cursor-not-allowed' 
-                                          : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
+                                          : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
                                       }`}
                                     >
                                       {statusOptionsList.map(option => (
@@ -1401,7 +1387,7 @@ const isRefundable = (order) => {
                                 ) : (
                                   getStatusBadge(order.orderStatus)
                                 )}
-                                </td>
+                              </td>
                               
                               <td className="px-3 py-4 whitespace-nowrap">
                                 {userRole === 'admin' ? (
@@ -1413,7 +1399,7 @@ const isRefundable = (order) => {
                                       className={`text-xs border rounded px-2 py-1 w-full max-w-[160px] ${
                                         statusUpdating[order._id] 
                                           ? 'bg-gray-100 cursor-not-allowed' 
-                                          : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#996600] focus:border-transparent'
+                                          : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
                                       }`}
                                     >
                                       {paymentStatusOptionsList.map(option => (
@@ -1424,7 +1410,7 @@ const isRefundable = (order) => {
                                     </select>
                                     
                                     {statusUpdating[order._id] && (
-                                      <div className="flex items-center gap-1 text-xs text-[#996600]">
+                                      <div className="flex items-center gap-1 text-xs text-[#ff0000]">
                                         <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -1436,7 +1422,7 @@ const isRefundable = (order) => {
                                 ) : (
                                   getPaymentStatusBadge(order.paymentStatus)
                                 )}
-                                </td>
+                              </td>
                               <td className="px-3 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-900">
                                   {order.products?.length || 0} items
@@ -1444,12 +1430,12 @@ const isRefundable = (order) => {
                                 <div className="text-xs text-gray-500">
                                   {formatCurrency(order.finalAmount || order.totalAmount || 0)}
                                 </div>
-                                </td>
+                              </td>
                               <td className="px-3 py-4 whitespace-nowrap">
                                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                                   <button
                                     onClick={() => fetchOrderReceipt(orderId)}
-                                    className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-[#996600] to-[#7a5200] text-white text-xs sm:text-sm rounded hover:from-[#7a5200] hover:to-[#5a3b00] transition-colors whitespace-nowrap"
+                                    className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white text-xs sm:text-sm rounded hover:from-[#cc0000] hover:to-[#aa0000] transition-colors whitespace-nowrap"
                                   >
                                     View Receipt
                                   </button>
@@ -1524,7 +1510,7 @@ const isRefundable = (order) => {
                                     </>
                                   )}
                                 </div>
-                                </td>
+                              </td>
                             </tr>
                           );
                         })}

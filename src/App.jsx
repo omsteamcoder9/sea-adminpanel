@@ -11,7 +11,8 @@ import OrdersPage from './pages/OrdersPage';
 import CustomerPage from './pages/CustomerPage';
 import Settings from './pages/Settings';
 import TermsManagement from './pages/TermsManagement';
-import PrivacyManagement from './pages/PrivacyManagement'; // Import PrivacyManagement
+import PrivacyManagement from './pages/PrivacyManagement';
+import DeliveryBoys from './pages/DeliveryBoys'; // ✅ ADD THIS IMPORT
 
 // Import Blog pages
 import Blogs from './pages/Blogs';
@@ -98,6 +99,16 @@ function App() {
               element={
                 <ProtectedRoute adminOnly={true}>
                   <CustomerPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Delivery Boys - ✅ ADD THIS ROUTE */}
+            <Route 
+              path="/delivery-boys" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <DeliveryBoys />
                 </ProtectedRoute>
               } 
             />

@@ -136,7 +136,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
           </div>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-[#D97A22] transition-colors"
+            className="text-gray-400 hover:text-[#ff0000] transition-colors"
           >
             <X size={24} />
           </button>
@@ -150,7 +150,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
               onClick={() => setActiveTab('basic')}
               className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'basic'
-                  ? 'text-[#D97A22] border-b-2 border-[#D97A22]'
+                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -161,7 +161,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
               onClick={() => setActiveTab('requirements')}
               className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'requirements'
-                  ? 'text-[#D97A22] border-b-2 border-[#D97A22]'
+                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -172,7 +172,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
               onClick={() => setActiveTab('sections')}
               className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'sections'
-                  ? 'text-[#D97A22] border-b-2 border-[#D97A22]'
+                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -183,7 +183,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
               onClick={() => setActiveTab('legal')}
               className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'legal'
-                  ? 'text-[#D97A22] border-b-2 border-[#D97A22]'
+                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -213,7 +213,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsOfServiceTitle}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                   placeholder="Enter title"
                 />
               </div>
@@ -227,7 +227,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsImportantNotice}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                   placeholder="Enter important notice"
                 />
               </div>
@@ -244,7 +244,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                 <button
                   type="button"
                   onClick={addRequirement}
-                  className="text-sm text-[#D97A22] hover:text-[#c56a1e] flex items-center gap-1"
+                  className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
                 >
                   <Plus size={16} /> Add Requirement
                 </button>
@@ -257,7 +257,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                       type="text"
                       value={requirement}
                       onChange={(e) => handleRequirementChange(index, e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                       placeholder={`Requirement ${index + 1}`}
                     />
                   </div>
@@ -283,7 +283,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                 <button
                   type="button"
                   onClick={addSection}
-                  className="text-sm text-[#D97A22] hover:text-[#c56a1e] flex items-center gap-1"
+                  className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
                 >
                   <Plus size={16} /> Add Section
                 </button>
@@ -313,7 +313,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                       type="text"
                       value={section.title}
                       onChange={(e) => handleSectionChange(index, 'title', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent bg-white"
                       placeholder="Section title"
                     />
                   </div>
@@ -326,7 +326,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                       value={section.content}
                       onChange={(e) => handleSectionChange(index, 'content', e.target.value)}
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent bg-white"
                       placeholder="Section content"
                     />
                   </div>
@@ -347,7 +347,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsIntellectualProperty}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                   placeholder="Intellectual property content"
                 />
               </div>
@@ -361,7 +361,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsLimitationLiability}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                   placeholder="Limitation of liability content"
                 />
               </div>
@@ -375,7 +375,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsChangesNotice}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                   placeholder="Changes notice content"
                 />
               </div>
@@ -389,7 +389,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
                   value={formData.termsContactInfo}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent"
+                  className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
                   placeholder="Contact information"
                 />
               </div>
@@ -416,7 +416,7 @@ const EditTermsModal = ({ isOpen, onClose, onEditTerms, terms }) => {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#D97A22] to-[#c56a1e] rounded-lg hover:from-[#c56a1e] hover:to-[#b85e1a] disabled:opacity-50 transition-all duration-200 shadow-md flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-lg hover:from-[#cc0000] hover:to-[#aa0000] disabled:opacity-50 transition-all duration-200 shadow-md flex items-center gap-2"
             >
               {loading ? (
                 'Updating...'

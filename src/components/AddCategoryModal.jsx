@@ -86,7 +86,7 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
           <h2 className="text-lg font-semibold text-gray-800">Add Category</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-[#996600] transition-colors"
+            className="text-gray-400 hover:text-[#ff0000] transition-colors"
           >
             ✕
           </button>
@@ -110,7 +110,7 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
               placeholder="Enter category name"
               autoFocus
             />
@@ -137,7 +137,7 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
                 </button>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#996600] transition-colors text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#ff0000] transition-colors text-center">
                 <input
                   type="file"
                   accept="image/*"
@@ -169,7 +169,7 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] disabled:opacity-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] disabled:opacity-50 transition-colors"
             >
               {loading ? 'Adding...' : 'Add Category'}
             </button>

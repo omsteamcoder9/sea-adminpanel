@@ -16,7 +16,8 @@ import {
   FileText,
   LogOut,
   FileSignature,
-  Shield // Add this icon for Privacy
+  Shield,
+  Truck  // ✅ ADD THIS - for Delivery Boys
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -45,8 +46,9 @@ const Sidebar = () => {
     { path: '/products', label: 'Products', icon: Package },
     { path: '/orders', label: 'Orders', icon: ClipboardList },
     { path: '/customers', label: 'Customers', icon: Users },
+    { path: '/delivery-boys', label: 'Delivery Boys', icon: Truck }, // ✅ ADD THIS LINE
     { path: '/terms', label: 'Terms of Service', icon: FileSignature },
-    { path: '/privacy', label: 'Privacy Policy', icon: Shield }, // Add Privacy menu item
+    { path: '/privacy', label: 'Privacy Policy', icon: Shield },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -73,16 +75,16 @@ const Sidebar = () => {
     <>
       {/* Mobile Header - Only show on mobile */}
       {isMobile && (
-        <div className="lg:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-[#996600]/20 z-40">
+        <div className="lg:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-[#ff0000]/20 z-40">
           <div className="flex items-center justify-between p-4">
             <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-[#996600] to-[#7a5200] bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-[#ff0000] to-[#cc0000] bg-clip-text text-transparent">
                 Admin Panel
               </h2>
             </div>
             <button
               onClick={toggleMobileMenu}
-              className="p-2 text-[#996600] hover:text-[#7a5200]"
+              className="p-2 text-[#ff0000] hover:text-[#cc0000]"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -105,13 +107,13 @@ const Sidebar = () => {
           : 'sticky top-0 h-screen'
         }
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        bg-white/95 backdrop-blur-xl text-slate-800 w-64 flex-shrink-0 border-r border-[#996600]/20
+        bg-white/95 backdrop-blur-xl text-slate-800 w-64 flex-shrink-0 border-r border-[#ff0000]/20
         flex flex-col overflow-hidden
       `}>
         <div className="p-6 flex flex-col h-full overflow-hidden">
           {/* Header - Fixed */}
           <div className="flex-shrink-0 mb-8 pt-4 pl-2">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#996600] to-[#7a5200] bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#ff0000] to-[#cc0000] bg-clip-text text-transparent">
               Admin Panel
             </h2>
             <p className="text-slate-500 text-sm mt-2">Welcome back!</p>
@@ -119,7 +121,7 @@ const Sidebar = () => {
             {/* View Website Button */}
             <button
               onClick={openWebsite}
-              className="mt-4 w-full bg-gradient-to-r from-[#996600] to-[#7a5200] text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-[#7a5200] hover:to-[#664200] transition-all duration-200 hover:shadow-md cursor-pointer"
+              className="mt-4 w-full bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-[#cc0000] hover:to-[#aa0000] transition-all duration-200 hover:shadow-md cursor-pointer"
             >
               <Eye size={18} />
               View Website
@@ -133,7 +135,8 @@ const Sidebar = () => {
                 const isActive = location.pathname === item.path || 
                   (item.path === '/blogs' && location.pathname.startsWith('/blogs')) ||
                   (item.path === '/terms' && location.pathname.startsWith('/terms')) ||
-                  (item.path === '/privacy' && location.pathname.startsWith('/privacy'));
+                  (item.path === '/privacy' && location.pathname.startsWith('/privacy')) ||
+                  (item.path === '/delivery-boys' && location.pathname.startsWith('/delivery-boys')); // ✅ ADD THIS
                 const Icon = item.icon;
                 return (
                   <li key={item.path}>
@@ -142,14 +145,14 @@ const Sidebar = () => {
                       onClick={closeMobileMenu}
                       className={`group flex items-center px-4 py-3 rounded-xl transition-all duration-200 ease-out ${
                         isActive
-                          ? 'bg-white text-[#996600] shadow-md border border-[#996600]/30'
-                          : 'text-slate-600 hover:bg-white/80 hover:text-[#996600] hover:shadow-sm'
+                          ? 'bg-white text-[#ff0000] shadow-md border border-[#ff0000]/30'
+                          : 'text-slate-600 hover:bg-white/80 hover:text-[#ff0000] hover:shadow-sm'
                       }`}
                     >
                       <span className={`mr-3 text-lg transition-transform duration-200 ${
                         isActive ? 'scale-105' : 'group-hover:scale-105'
                       }`}>
-                        <Icon size={20} className={isActive ? 'text-[#996600]' : 'group-hover:text-[#996600]'} />
+                        <Icon size={20} className={isActive ? 'text-[#ff0000]' : 'group-hover:text-[#ff0000]'} />
                       </span>
                       
                       <span className="font-medium tracking-wide transition-all duration-200">
@@ -157,11 +160,11 @@ const Sidebar = () => {
                       </span>
                       
                       {isActive && (
-                        <div className="ml-auto w-1.5 h-1.5 bg-[#996600] rounded-full" />
+                        <div className="ml-auto w-1.5 h-1.5 bg-[#ff0000] rounded-full" />
                       )}
                       
                       {!isActive && (
-                        <div className="ml-auto w-1 h-5 bg-[#996600]/30 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                        <div className="ml-auto w-1 h-5 bg-[#ff0000]/30 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200" />
                       )}
                     </Link>
                   </li>
@@ -171,7 +174,7 @@ const Sidebar = () => {
           </nav>
 
           {/* Footer - Fixed */}
-          <div className="flex-shrink-0 mt-auto pt-6 border-t border-[#996600]/20">
+          <div className="flex-shrink-0 mt-auto pt-6 border-t border-[#ff0000]/20">
             {/* Logout Button */}
             <button
               onClick={handleLogout}

@@ -293,7 +293,7 @@ const Settings = () => {
       <div className="flex min-h-screen">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#996600]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff0000]"></div>
         </div>
       </div>
     );
@@ -362,7 +362,7 @@ const Settings = () => {
                 <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-[#996600] to-[#7a5200] rounded-lg flex items-center justify-center mr-2 sm:mr-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-lg flex items-center justify-center mr-2 sm:mr-3">
                         <CreditCard size={16} className="sm:w-5 sm:h-5 text-white" />
                       </div>
                       <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -387,7 +387,7 @@ const Settings = () => {
                         type="text"
                         value={razorpayKeyIdInput}
                         onChange={(e) => setRazorpayKeyIdInput(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                         placeholder="rzp_test_XXXXXXXXXXXXX"
                         autoFocus
                       />
@@ -406,7 +406,7 @@ const Settings = () => {
                           type={showSecretModalInput ? "text" : "password"}
                           value={razorpayKeySecretInput}
                           onChange={(e) => setRazorpayKeySecretInput(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600] pr-10"
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] pr-10"
                           placeholder="Enter your Razorpay Secret Key"
                         />
                         <button
@@ -435,7 +435,7 @@ const Settings = () => {
                       type="button"
                       onClick={saveRazorpayKeys}
                       disabled={saving}
-                      className="flex-1 px-3 py-2 text-sm bg-gradient-to-r from-[#996600] to-[#7a5200] text-white rounded-lg hover:from-[#7a5200] hover:to-[#5a3b00] flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-3 py-2 text-sm bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded-lg hover:from-[#cc0000] hover:to-[#aa0000] flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {saving ? (
                         <>
@@ -469,7 +469,7 @@ const Settings = () => {
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center px-3 sm:px-6 py-3 font-medium text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                           activeTab === tab.id
-                            ? 'text-[#996600] border-b-2 border-[#996600]'
+                            ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                             : 'text-gray-500 hover:text-gray-700'
                         }`}
                       >
@@ -499,7 +499,7 @@ const Settings = () => {
                               name="siteName"
                               value={settings.siteName}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="My E-commerce Store"
                             />
                           </div>
@@ -512,7 +512,7 @@ const Settings = () => {
                               name="siteTitle"
                               value={settings.siteTitle}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="Best Online Shopping Store"
                             />
                           </div>
@@ -525,7 +525,7 @@ const Settings = () => {
                               value={settings.siteDescription}
                               onChange={handleInputChange}
                               rows="2"
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="Your one-stop shop for everything"
                             />
                           </div>
@@ -548,7 +548,7 @@ const Settings = () => {
                               onChange={handleInputChange}
                               className="sr-only peer"
                             />
-                            <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#996600]"></div>
+                            <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#ff0000]"></div>
                           </label>
                         </div>
                       </div>
@@ -564,7 +564,7 @@ const Settings = () => {
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#996600] to-[#7a5200] rounded-lg flex items-center justify-center mr-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-lg flex items-center justify-center mr-3">
                               <CreditCard size={20} className="text-white" />
                             </div>
                             <div>
@@ -580,7 +580,7 @@ const Settings = () => {
                               onChange={(e) => handleRazorpayToggle(e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#996600]"></div>
+                            <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#ff0000]"></div>
                           </label>
                         </div>
                         
@@ -604,7 +604,7 @@ const Settings = () => {
                                     setRazorpayKeySecretInput(settings.razorpayKeySecret || '');
                                     setShowRazorpayModal(true);
                                   }}
-                                  className="text-[#996600] hover:text-[#7a5200] text-xs ml-2 px-2 py-1"
+                                  className="text-[#ff0000] hover:text-[#cc0000] text-xs ml-2 px-2 py-1"
                                 >
                                   {settings.razorpayKeyId ? 'Edit' : 'Set'}
                                 </button>
@@ -642,7 +642,7 @@ const Settings = () => {
                                     setRazorpayKeySecretInput(settings.razorpayKeySecret || '');
                                     setShowRazorpayModal(true);
                                   }}
-                                  className="text-[#996600] hover:text-[#7a5200] text-xs ml-2 px-2 py-1"
+                                  className="text-[#ff0000] hover:text-[#cc0000] text-xs ml-2 px-2 py-1"
                                 >
                                   Edit
                                 </button>
@@ -672,7 +672,7 @@ const Settings = () => {
                               onChange={handleInputChange}
                               className="sr-only peer"
                             />
-                            <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#996600]"></div>
+                            <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#ff0000]"></div>
                           </label>
                         </div>
                       </div>
@@ -699,7 +699,7 @@ const Settings = () => {
                               name="contactNumber"
                               value={settings.contactNumber}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="+91 1234567890"
                             />
                           </div>
@@ -713,7 +713,7 @@ const Settings = () => {
                               name="contactEmail"
                               value={settings.contactEmail}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="contact@example.com"
                             />
                           </div>
@@ -727,7 +727,7 @@ const Settings = () => {
                               value={settings.companyAddress}
                               onChange={handleInputChange}
                               rows="2"
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="123 Street, City, Country"
                             />
                           </div>
@@ -755,7 +755,7 @@ const Settings = () => {
                               name="facebookUrl"
                               value={settings.facebookUrl}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="https://facebook.com/yourpage"
                             />
                           </div>
@@ -768,7 +768,7 @@ const Settings = () => {
                               name="instagramUrl"
                               value={settings.instagramUrl}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="https://instagram.com/yourprofile"
                             />
                           </div>
@@ -781,7 +781,7 @@ const Settings = () => {
                               name="twitterUrl"
                               value={settings.twitterUrl}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="https://twitter.com/yourprofile"
                             />
                           </div>
@@ -794,7 +794,7 @@ const Settings = () => {
                               name="youtubeUrl"
                               value={settings.youtubeUrl}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="https://youtube.com/yourchannel"
                             />
                           </div>
@@ -807,7 +807,7 @@ const Settings = () => {
                               name="linkedinUrl"
                               value={settings.linkedinUrl}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                               placeholder="https://linkedin.com/company/yourpage"
                             />
                           </div>
@@ -853,7 +853,7 @@ const Settings = () => {
                             value={settings.headerScripts}
                             onChange={handleInputChange}
                             rows="6"
-                            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                             placeholder='<!-- Add header scripts here -->'
                           />
                         </div>
@@ -877,7 +877,7 @@ const Settings = () => {
                             value={settings.bodyScripts}
                             onChange={handleInputChange}
                             rows="6"
-                            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                             placeholder='<!-- Add body scripts here -->'
                           />
                         </div>
@@ -901,7 +901,7 @@ const Settings = () => {
                             value={settings.footerScripts}
                             onChange={handleInputChange}
                             rows="6"
-                            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#996600] focus:border-[#996600]"
+                            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000]"
                             placeholder='<!-- Add footer scripts here -->'
                           />
                         </div>
@@ -915,7 +915,7 @@ const Settings = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-[#996600] to-[#7a5200] text-white font-medium rounded-lg hover:from-[#7a5200] hover:to-[#5a3b00] transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white font-medium rounded-lg hover:from-[#cc0000] hover:to-[#aa0000] transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                   >
                     {saving ? (
                       <>

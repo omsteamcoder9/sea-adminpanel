@@ -85,7 +85,7 @@ const Blogs = () => {
           </div>
           <button
             onClick={handleCreateNew}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="bg-[#ff0000] text-white px-4 py-2 rounded-lg hover:bg-[#cc0000] flex items-center gap-2"
           >
             <span>+</span> Create New Post
           </button>
@@ -102,7 +102,7 @@ const Blogs = () => {
         <div className="mb-4">
           <button
             onClick={fetchBlogs}
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -115,7 +115,7 @@ const Blogs = () => {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff0000]"></div>
               <p className="mt-2 text-gray-600">Loading blogs...</p>
             </div>
           ) : blogs.length === 0 ? (
@@ -129,14 +129,12 @@ const Blogs = () => {
                   Showing {blogs.length} blog{blogs.length !== 1 ? 's' : ''}
                 </p>
               </div>
-              
-              <table className="min-w-full divide-y divide-gray-200">
+                     <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Blog Post
                     </th>
-                
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created Date
                     </th>
@@ -150,22 +148,22 @@ const Blogs = () => {
                     <tr key={blog._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                       <div className="flex-shrink-0 h-12 w-12">
-  {blog.image && (
-    <img
-      className="h-12 w-12 rounded-lg object-cover"
-      src={`${import.meta.env.VITE_API_FILE_URL || 'http://localhost:5002'}/uploads/${blog.image}`}
-      alt={blog.imageAlt || blog.title}
-      onError={(e) => {
-        console.error('❌ Image failed:', blog.image);
-        console.error('Full URL:', e.target.src);
-        e.target.onerror = null;
-        e.target.src = 'https://via.placeholder.com/150';
-      }}
-      onLoad={() => console.log('✅ Image loaded successfully')}
-    />
-  )}
-</div>
+                          <div className="flex-shrink-0 h-12 w-12">
+                            {blog.image && (
+                              <img
+                                className="h-12 w-12 rounded-lg object-cover"
+                                src={`${import.meta.env.VITE_API_FILE_URL || 'http://localhost:5002'}/uploads/${blog.image}`}
+                                alt={blog.imageAlt || blog.title}
+                                onError={(e) => {
+                                  console.error('❌ Image failed:', blog.image);
+                                  console.error('Full URL:', e.target.src);
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://via.placeholder.com/150';
+                                }}
+                                onLoad={() => console.log('✅ Image loaded successfully')}
+                              />
+                            )}
+                          </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
                               {blog.title}
@@ -179,7 +177,6 @@ const Blogs = () => {
                           </div>
                         </div>
                       </td>
-              
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {new Date(blog.createdAt).toLocaleDateString()}

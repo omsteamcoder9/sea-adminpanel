@@ -74,9 +74,9 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
         
         modalContentRef.current.scrollTo({ top: offsetPosition, behavior: 'smooth' });
         
-        element.classList.add('ring-2', 'ring-[#996600]', 'border-[#996600]');
+        element.classList.add('ring-2', 'ring-[#ff0000]', 'border-[#ff0000]');
         setTimeout(() => {
-          element.classList.remove('ring-2', 'ring-[#996600]', 'border-[#996600]');
+          element.classList.remove('ring-2', 'ring-[#ff0000]', 'border-[#ff0000]');
         }, 3000);
       }
     }, 100);
@@ -667,7 +667,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
       </label>
       {categoriesLoading ? (
         <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#996600]"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ff0000]"></div>
           <span className="text-sm text-gray-600">Loading categories...</span>
         </div>
       ) : (
@@ -677,7 +677,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
           value={formData.category}
           onChange={handleInputChange}
           required
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm bg-white"
+          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm bg-white"
         >
           <option value="">-- Select a category --</option>
           {Array.isArray(categories) && categories.length > 0 ? (
@@ -723,7 +723,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
                   placeholder="Enter product name"
                 />
               </div>
@@ -739,7 +739,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                   value={formData.seller}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
                   placeholder="Enter seller name"
                 />
               </div>
@@ -755,7 +755,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                       id="auto-slug"
                       checked={autoGenerateSlug}
                       onChange={handleSlugToggle}
-                      className="rounded border-gray-300 text-[#996600] focus:ring-[#996600] w-4 h-4"
+                      className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000] w-4 h-4"
                     />
                     <label htmlFor="auto-slug" className="text-xs text-gray-600">Auto-generate from name</label>
                   </div>
@@ -767,7 +767,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                     onChange={handleInputChange}
                     required
                     disabled={autoGenerateSlug}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
                     placeholder="product-slug"
                   />
                 </div>
@@ -812,7 +812,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                     min="0"
                     step="0.01"
                     required
-                    className="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                    className="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
                     placeholder="0.00"
                   />
                 </div>
@@ -830,7 +830,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                   onChange={handleInputChange}
                   required
                   min="0"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
                   placeholder="Enter stock quantity"
                 />
               </div>
@@ -854,14 +854,14 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
         
         {expandedSections.images && (
           <div className="p-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#996600] transition-colors">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#ff0000] transition-colors">
               <input
                 id="product-images"
                 type="file"
                 multiple
                 onChange={handleImageChange}
                 accept="image/*"
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#996600] file:text-white hover:file:bg-[#7a5200]"
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#ff0000] file:text-white hover:file:bg-[#cc0000]"
               />
             </div>
             <p className="text-xs text-amber-600 mt-2">⚠️ At least one image required</p>
@@ -918,7 +918,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
               onChange={handleInputChange}
               required
               rows={4}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
               placeholder="Enter product description"
             />
           </div>
@@ -967,14 +967,14 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                         type="text"
                         value={spec.key}
                         onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         placeholder="Key (e.g. Material)"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         placeholder="Value (e.g. Cotton)"
                       />
                     </div>
@@ -990,7 +990,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
             <button
               type="button"
               onClick={addSpecification}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
             >
               <Plus size={14} className="mr-1" />
               Add Specification
@@ -1028,13 +1028,13 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 onChange={(e) => setNewKeyFeature(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeyFeature())}
                 placeholder="Enter a key feature"
-                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
               />
               <button
                 type="button"
                 onClick={handleAddKeyFeature}
                 disabled={!newKeyFeature.trim()}
-                className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Plus size={16} className="mr-1" />
                 Add
@@ -1092,7 +1092,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
                   placeholder="Enter product name"
                 />
               </div>
@@ -1108,7 +1108,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                   value={formData.seller}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
                   placeholder="Enter seller name"
                 />
               </div>
@@ -1124,7 +1124,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                       id="auto-slug"
                       checked={autoGenerateSlug}
                       onChange={handleSlugToggle}
-                      className="rounded border-gray-300 text-[#996600] focus:ring-[#996600] w-4 h-4"
+                      className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000] w-4 h-4"
                     />
                     <label htmlFor="auto-slug" className="text-xs text-gray-600">Auto-generate from name</label>
                   </div>
@@ -1136,7 +1136,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                     onChange={handleInputChange}
                     required
                     disabled={autoGenerateSlug}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
                     placeholder="product-slug"
                   />
                 </div>
@@ -1206,7 +1206,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 id="add-variant-button"
                 type="button"
                 onClick={addVariant}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] transition-colors"
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
               >
                 <Plus size={14} className="mr-1" />
                 Add Variant
@@ -1222,7 +1222,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 <button
                   type="button"
                   onClick={addVariant}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] transition-colors"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
                 >
                   <Plus size={16} className="mr-1" />
                   Add Your First Variant
@@ -1236,7 +1236,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-medium text-gray-500">Variant #{index + 1}</span>
                         {variant.isDefault && (
-                          <span className="px-2 py-0.5 text-xs font-medium text-white bg-[#996600] rounded-full">
+                          <span className="px-2 py-0.5 text-xs font-medium text-white bg-[#ff0000] rounded-full">
                             Default
                           </span>
                         )}
@@ -1258,7 +1258,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           type="text"
                           value={variant.variantName}
                           onChange={(e) => handleVariantChange(index, 'variantName', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="e.g. Pack 1, 500g, etc."
                           required
                         />
@@ -1275,7 +1275,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                             type="number"
                             value={variant.price}
                             onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
-                            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                             placeholder="0.00"
                             min="0"
                             step="0.01"
@@ -1291,7 +1291,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           type="number"
                           value={variant.stock}
                           onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="0"
                           min="0"
                           required
@@ -1304,7 +1304,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           type="number"
                           value={variant.weight}
                           onChange={(e) => handleVariantChange(index, 'weight', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="e.g., 500"
                           min="0"
                           step="0.01"
@@ -1316,7 +1316,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                         <select
                           value={variant.weightUnit || 'gram'}
                           onChange={(e) => handleVariantChange(index, 'weightUnit', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         >
                           <option value="gram">Gram (g)</option>
                           <option value="kg">Kilogram (kg)</option>
@@ -1332,7 +1332,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           type="text"
                           value={variant.sku}
                           onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="Variant SKU"
                         />
                       </div>
@@ -1342,21 +1342,21 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           type="checkbox"
                           checked={variant.isDefault}
                           onChange={(e) => handleVariantChange(index, 'isDefault', e.target.checked)}
-                          className="rounded border-gray-300 text-[#996600] focus:ring-[#996600]"
+                          className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000]"
                         />
                         <span className="text-xs text-gray-600">Set as default variant</span>
                       </div>
                       
                       <div className="md:col-span-2">
                         <label className="block text-xs font-medium text-gray-500 mb-1">Variant Images *</label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-[#996600] transition-colors">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-[#ff0000] transition-colors">
                           <input
                             id={`variant-images-${index}`}
                             type="file"
                             multiple
                             onChange={(e) => handleVariantImageChange(e, index)}
                             accept="image/*"
-                            className="w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-[#996600] file:text-white hover:file:bg-[#7a5200]"
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-[#ff0000] file:text-white hover:file:bg-[#cc0000]"
                           />
                         </div>
                         
@@ -1394,7 +1394,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           id={`variant-description-${index}`}
                           value={variant.description}
                           onChange={(e) => handleVariantChange(index, 'description', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="Describe this variant"
                           rows="2"
                           required
@@ -1451,14 +1451,14 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                         type="text"
                         value={spec.key}
                         onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         placeholder="Key"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         placeholder="Value"
                       />
                     </div>
@@ -1474,7 +1474,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
             <button
               type="button"
               onClick={addSpecification}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
             >
               <Plus size={14} className="mr-1" />
               Add Specification
@@ -1512,13 +1512,13 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 onChange={(e) => setNewKeyFeature(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeyFeature())}
                 placeholder="Enter a key feature"
-                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-[#996600] text-sm"
+                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
               />
               <button
                 type="button"
                 onClick={handleAddKeyFeature}
                 disabled={!newKeyFeature.trim()}
-                className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-[#996600] rounded-lg hover:bg-[#7a5200] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Plus size={16} className="mr-1" />
                 Add
@@ -1576,7 +1576,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 value={formData.metaTitle || ''}
                 onChange={handleInputChange}
                 maxLength="60"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                 placeholder="Title for search engines"
               />
             </div>
@@ -1594,7 +1594,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 onChange={handleInputChange}
                 maxLength="160"
                 rows="2"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                 placeholder="Description for search engines"
               />
             </div>
@@ -1608,7 +1608,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 name="metaKeywords"
                 value={formData.metaKeywords || ''}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                 placeholder="keyword1, keyword2, keyword3"
               />
             </div>
@@ -1622,7 +1622,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 name="canonicalUrl"
                 value={formData.canonicalUrl || ''}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                 placeholder="https://yourstore.com/product-slug"
               />
             </div>
@@ -1636,7 +1636,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 name="ogTitle"
                 value={formData.ogTitle || ''}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                 placeholder="Title for social sharing"
               />
             </div>
@@ -1650,7 +1650,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                 value={formData.ogDescription || ''}
                 onChange={handleInputChange}
                 rows="2"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#996600]"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                 placeholder="Description for social sharing"
               />
             </div>
@@ -1684,7 +1684,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
         <div className="flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-10">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Package size={20} className="mr-2 text-[#996600]" />
+              <Package size={20} className="mr-2 text-[#ff0000]" />
               Add New Product
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">Create a new product with variants and details</p>
@@ -1714,7 +1714,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
               onClick={() => handleTabChange('simple')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === 'simple'
-                  ? 'text-[#996600] border-b-2 border-[#996600]'
+                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -1725,7 +1725,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
               onClick={() => handleTabChange('variant')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === 'variant'
-                  ? 'text-[#996600] border-b-2 border-[#996600]'
+                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -1751,7 +1751,7 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
             <button
               type="submit"
               disabled={loading || categoriesLoading}
-              className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-[#996600] border border-transparent rounded-lg hover:bg-[#7a5200] disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-1 sm:order-2"
+              className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-[#ff0000] border border-transparent rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-1 sm:order-2"
             >
               <Save size={16} className="mr-2" />
               {loading ? 'Creating...' : 'Create Product'}

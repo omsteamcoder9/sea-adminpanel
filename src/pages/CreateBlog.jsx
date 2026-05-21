@@ -284,7 +284,7 @@ const CreateBlog = () => {
                   onChange={handleChange}
                   required
                   maxLength="200"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                   placeholder="Enter blog title"
                   onBlur={generateSEOFIelds}
                 />
@@ -304,7 +304,7 @@ const CreateBlog = () => {
                   onChange={handleChange}
                   required
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                   placeholder="Brief description of the blog"
                   onBlur={generateExcerpt}
                 />
@@ -321,7 +321,7 @@ const CreateBlog = () => {
                   onChange={handleChange}
                   required
                   rows="15"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000] font-mono"
                   placeholder="Write your blog content here..."
                 />
               </div>
@@ -402,7 +402,7 @@ const CreateBlog = () => {
                       value={formData.metaTitle}
                       onChange={handleChange}
                       maxLength="70"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Title for search engines"
                     />
                     <div className={`text-xs mt-1 text-right ${charCount.metaTitle > 70 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -421,7 +421,7 @@ const CreateBlog = () => {
                       onChange={handleChange}
                       rows="2"
                       maxLength="160"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Description for search results"
                     />
                     <div className={`text-xs mt-1 text-right ${charCount.metaDescription > 160 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -439,7 +439,7 @@ const CreateBlog = () => {
                       name="metaKeywords"
                       value={formData.metaKeywords}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Comma-separated keywords"
                     />
                   </div>
@@ -454,7 +454,7 @@ const CreateBlog = () => {
                       name="canonicalUrl"
                       value={formData.canonicalUrl}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="https://example.com/blog-post"
                     />
                   </div>
@@ -469,7 +469,7 @@ const CreateBlog = () => {
                       name="ogTitle"
                       value={formData.ogTitle}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Title for social media"
                     />
                   </div>
@@ -484,7 +484,7 @@ const CreateBlog = () => {
                       value={formData.ogDescription}
                       onChange={handleChange}
                       rows="2"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Description for social media"
                     />
                   </div>
@@ -496,7 +496,7 @@ const CreateBlog = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="flex-1 bg-[#ff0000] text-white px-4 py-2 rounded-md hover:bg-[#cc0000] disabled:opacity-50"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">

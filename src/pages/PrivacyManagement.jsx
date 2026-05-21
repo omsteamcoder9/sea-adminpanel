@@ -151,7 +151,7 @@ const PrivacyManagement = () => {
         <header className="bg-white shadow">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center">
-              <FaShieldAlt className="text-[#D97A22] text-xl mr-2" />
+              <FaShieldAlt className="text-[#ff0000] text-xl mr-2" />
               <h1 className="text-xl font-bold text-gray-800">Privacy Policy Management</h1>
             </div>
 
@@ -192,7 +192,7 @@ const PrivacyManagement = () => {
               {isAdmin && (
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="flex-1 sm:flex-none bg-gradient-to-r from-[#D97A22] to-[#c56a1e] hover:from-[#c56a1e] hover:to-[#b85e1a] text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px]"
+                  className="flex-1 sm:flex-none bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px]"
                 >
                   <FaPlus className="sm:mr-2" />
                   <span className="hidden sm:inline">Add New Version</span>
@@ -221,7 +221,7 @@ const PrivacyManagement = () => {
                 placeholder="Search by title or version..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97A22] focus:border-transparent text-sm md:text-base"
+                className="w-full pl-9 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm md:text-base"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ const PrivacyManagement = () => {
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {loading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D97A22] mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff0000] mx-auto"></div>
                 <p className="mt-2 text-gray-600">Loading privacy policy...</p>
               </div>
             ) : privacyToRender.length === 0 ? (
@@ -245,7 +245,7 @@ const PrivacyManagement = () => {
                 {isAdmin && (
                   <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="mt-4 inline-flex items-center px-4 py-2 bg-[#D97A22] text-white rounded-lg hover:bg-[#c56a1e]"
+                    className="mt-4 inline-flex items-center px-4 py-2 bg-[#ff0000] text-white rounded-lg hover:bg-[#cc0000]"
                   >
                     <FaPlus className="mr-2" /> Create Privacy Policy
                   </button>
@@ -297,7 +297,7 @@ const PrivacyManagement = () => {
                               </button>
                               <button
                                 onClick={() => openEditModal(privacy)}
-                                className="bg-gradient-to-r from-[#D97A22] to-[#c56a1e] hover:from-[#c56a1e] hover:to-[#b85e1a] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
+                                className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
                                 title="Edit (Creates New Version)"
                               >
                                 <FaEdit className="mr-1" /> Edit
@@ -345,7 +345,7 @@ const PrivacyManagement = () => {
                               </button>
                               <button
                                 onClick={() => openEditModal(privacy)}
-                                className="bg-gradient-to-r from-[#D97A22] to-[#c56a1e] hover:from-[#c56a1e] hover:to-[#b85e1a] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
+                                className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
                               >
                                 <FaEdit className="mr-1" /> Edit
                               </button>
@@ -449,7 +449,7 @@ const ViewPrivacyModal = ({ isOpen, onClose, privacy }) => {
           </div>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-[#D97A22] transition-colors"
+            className="text-gray-400 hover:text-[#ff0000] transition-colors"
           >
             <FaFileAlt size={24} />
           </button>
@@ -458,13 +458,13 @@ const ViewPrivacyModal = ({ isOpen, onClose, privacy }) => {
         {/* Tabs */}
         <div className="border-b px-6 overflow-x-auto">
           <div className="flex gap-4 whitespace-nowrap">
-            <button onClick={() => setActiveTab('overview')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'overview' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Overview</button>
-            <button onClick={() => setActiveTab('collection')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'collection' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Data Collection</button>
-            <button onClick={() => setActiveTab('usage')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'usage' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Data Usage</button>
-            <button onClick={() => setActiveTab('sharing')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'sharing' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Data Sharing</button>
-            <button onClick={() => setActiveTab('rights')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'rights' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Your Rights</button>
-            <button onClick={() => setActiveTab('sections')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'sections' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Sections</button>
-            <button onClick={() => setActiveTab('legal')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'legal' ? 'text-[#D97A22] border-b-2 border-[#D97A22]' : 'text-gray-500 hover:text-gray-700'}`}>Legal Info</button>
+            <button onClick={() => setActiveTab('overview')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'overview' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Overview</button>
+            <button onClick={() => setActiveTab('collection')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'collection' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Data Collection</button>
+            <button onClick={() => setActiveTab('usage')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'usage' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Data Usage</button>
+            <button onClick={() => setActiveTab('sharing')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'sharing' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Data Sharing</button>
+            <button onClick={() => setActiveTab('rights')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'rights' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Your Rights</button>
+            <button onClick={() => setActiveTab('sections')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'sections' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Sections</button>
+            <button onClick={() => setActiveTab('legal')} className={`py-2 px-4 font-medium transition-colors ${activeTab === 'legal' ? 'text-[#ff0000] border-b-2 border-[#ff0000]' : 'text-gray-500 hover:text-gray-700'}`}>Legal Info</button>
           </div>
         </div>
 
@@ -550,7 +550,7 @@ const ViewPrivacyModal = ({ isOpen, onClose, privacy }) => {
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Policy Sections</h3>
               {privacy.privacySections.map((section) => (
-                <div key={section.number} className="border-l-4 border-[#D97A22] pl-4">
+                <div key={section.number} className="border-l-4 border-[#ff0000] pl-4">
                   <h4 className="font-semibold text-gray-800 mb-2">{section.number}. {section.title}</h4>
                   <p className="text-gray-600 text-sm">{section.content}</p>
                 </div>

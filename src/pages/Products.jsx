@@ -647,7 +647,7 @@ const getProductImage = (product) => {
           <div className="flex space-x-2 pt-3 border-t border-gray-100">
             <button
               onClick={() => openEditModal(product)}
-              className="flex-1 bg-gradient-to-r from-[#996600] to-[#7a5200] hover:from-[#7a5200] hover:to-[#5a3b00] text-white px-3 py-2 rounded text-sm font-medium transition duration-200"
+              className="flex-1 bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200"
             >
               Edit
             </button>
@@ -712,7 +712,7 @@ const getProductImage = (product) => {
                   {isAdmin && (
                     <button
                       onClick={() => setIsModalOpen(true)}
-                      className="flex-1 sm:flex-none bg-gradient-to-r from-[#996600] to-[#7a5200] hover:from-[#7a5200] hover:to-[#5a3b00] text-white px-4 py-3 sm:py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px]"
+                      className="flex-1 sm:flex-none bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-4 py-3 sm:py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px]"
                     >
                       <span className="hidden sm:inline mr-2">+</span>
                       <span>Add Product</span>
@@ -732,7 +732,7 @@ const getProductImage = (product) => {
                       placeholder="Search products..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#996600] focus:border-transparent text-sm"
+                      className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
                     />
                   </div>
 
@@ -834,7 +834,7 @@ const getProductImage = (product) => {
             <div className="bg-white shadow rounded-lg overflow-hidden">
               {loading ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-[#996600] mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-[#ff0000] mx-auto"></div>
                   <p className="mt-2 text-gray-600 text-sm sm:text-base">Loading products...</p>
                 </div>
               ) : (
@@ -886,7 +886,7 @@ const getProductImage = (product) => {
                                   {isAdmin && (
                                     <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                                       <div className="flex space-x-2">
-                                        <button onClick={() => openEditModal(product)} className="bg-gradient-to-r from-[#996600] to-[#7a5200] text-white px-3 py-2 rounded text-xs font-medium">Edit</button>
+                                        <button onClick={() => openEditModal(product)} className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white px-3 py-2 rounded text-xs font-medium">Edit</button>
                                         <button onClick={() => handleDeleteProduct(product._id)} className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 rounded text-xs font-medium">Delete</button>
                                       </div>
                                     </td>

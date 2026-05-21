@@ -253,7 +253,7 @@ const handleRemoveNewOgImage = () => {
       <div className="flex">
         <Sidebar />
         <div className="flex-1 p-8 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff0000]"></div>
           <p className="mt-2 text-gray-600">Loading blog data...</p>
         </div>
       </div>
@@ -300,7 +300,7 @@ const handleRemoveNewOgImage = () => {
                   onChange={handleChange}
                   required
                   maxLength="200"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                   placeholder="Enter blog title"
                 />
                 <div className={`text-xs mt-1 text-right ${charCount.title > 200 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -319,7 +319,7 @@ const handleRemoveNewOgImage = () => {
                   onChange={handleChange}
                   required
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                   placeholder="Brief description of the blog"
                 />
               </div>
@@ -335,7 +335,7 @@ const handleRemoveNewOgImage = () => {
                   onChange={handleChange}
                   required
                   rows="15"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000] font-mono"
                   placeholder="Write your blog content here..."
                 />
               </div>
@@ -423,7 +423,7 @@ const handleRemoveNewOgImage = () => {
                       id="image-upload"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                     />
                     <p className="mt-1 text-xs text-gray-500">
                       {imageFile ? 'New image will replace current image' : 'Select new image to replace current'}
@@ -451,7 +451,7 @@ const handleRemoveNewOgImage = () => {
                       value={formData.metaTitle}
                       onChange={handleChange}
                       maxLength="70"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Title for search engines"
                     />
                     <div className={`text-xs mt-1 text-right ${charCount.metaTitle > 70 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -470,7 +470,7 @@ const handleRemoveNewOgImage = () => {
                       onChange={handleChange}
                       rows="2"
                       maxLength="160"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Description for search results"
                     />
                     <div className={`text-xs mt-1 text-right ${charCount.metaDescription > 160 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -488,7 +488,7 @@ const handleRemoveNewOgImage = () => {
                       name="metaKeywords"
                       value={formData.metaKeywords}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Comma-separated keywords"
                     />
                   </div>
@@ -503,7 +503,7 @@ const handleRemoveNewOgImage = () => {
                       name="canonicalUrl"
                       value={formData.canonicalUrl}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="https://example.com/blog-post"
                     />
                   </div>
@@ -518,7 +518,7 @@ const handleRemoveNewOgImage = () => {
                       name="ogTitle"
                       value={formData.ogTitle}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Title for social media"
                     />
                   </div>
@@ -533,7 +533,7 @@ const handleRemoveNewOgImage = () => {
                       value={formData.ogDescription}
                       onChange={handleChange}
                       rows="2"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                       placeholder="Description for social media"
                     />
                   </div>
@@ -545,7 +545,7 @@ const handleRemoveNewOgImage = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="flex-1 bg-[#ff0000] text-white px-4 py-2 rounded-md hover:bg-[#cc0000] disabled:opacity-50"
                 >
                   {saving ? (
                     <span className="flex items-center justify-center">
