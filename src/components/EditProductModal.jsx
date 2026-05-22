@@ -1,4 +1,4 @@
-// src/components/EditProductModal.jsx - UPDATED UI VERSION (Matching AddProductModal)
+// src/components/EditProductModal.jsx - VARIANT ONLY VERSION (No Simple Product, No SEO)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { categoriesAPI } from '../api/categories';
 import { productsAPI } from '../api/products';
@@ -12,55 +12,33 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    basePrice: '',
     description: '',
     category: '',
     seller: '',
-    stock: '',
-    metaTitle: '',
-    metaDescription: '',
-    metaKeywords: '',
-    canonicalUrl: '',
-    ogTitle: '',
-    ogDescription: '',
-    ogImageFile: null,
-    ogImagePreview: null,
-    ogImagePath: '',
   });
   
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mainImageFiles, setMainImageFiles] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [autoGenerateSlug, setAutoGenerateSlug] = useState(true);
   const [specifications, setSpecifications] = useState([]);
   const [keyFeatures, setKeyFeatures] = useState([]);
   const [newKeyFeature, setNewKeyFeature] = useState('');
   const [variants, setVariants] = useState([]);
-  const [showVariants, setShowVariants] = useState(false);
   const [variantImageFiles, setVariantImageFiles] = useState({});
   const [variantImagePreviews, setVariantImagePreviews] = useState({});
-  const [activeTab, setActiveTab] = useState('simple');
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     category: true,
     variants: true,
-    specifications: true,
-    features: true,
-    images: true,
-    description: true,
-    seo: true
+    specifications: false,
+    features: false,
   });
 
   // Track deleted images
-  const [deletedMainImages, setDeletedMainImages] = useState([]);
   const [deletedVariantImages, setDeletedVariantImages] = useState({});
-  const [deletedOgImage, setDeletedOgImage] = useState(null);
 
-  // FIXED: Use VITE_API_IMG_URL from env
   const API_FILE_URL = import.meta.env.VITE_API_IMG_URL;
   const previewUrls = useRef(new Set());
   const modalContentRef = useRef(null);
@@ -114,7 +92,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      // FIXED: Use getAllCategories instead of getActiveCategories
       const response = await categoriesAPI.getAllCategories();
       
       let categoriesArray = [];
@@ -141,64 +118,13 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
 
     console.log('📝 Populating form with product data:', product);
     
-    // Determine product type
-    const hasVariants = product.variants && product.variants.length > 0;
-    setActiveTab(hasVariants ? 'variant' : 'simple');
-    setShowVariants(hasVariants);
-    
-    // Construct OG image preview - FIXED: remove duplicate /uploads/
-    let ogImagePreview = '';
-    let ogImagePath = '';
-
-    if (product.ogImage) {
-      if (product.ogImage.startsWith('http')) {
-        ogImagePreview = product.ogImage;
-        try {
-          const url = new URL(product.ogImage);
-          ogImagePath = url.pathname;
-        } catch (e) {
-          const filename = product.ogImage.split('/').pop();
-          ogImagePath = `/uploads/${filename}`;
-        }
-      } else {
-        ogImagePath = product.ogImage;
-        const filename = product.ogImage.replace('/uploads/', '');
-        ogImagePreview = `${API_FILE_URL}/${filename}`;
-      }
-    } else if (product.images && product.images.length > 0 && product.images[0].image) {
-      if (product.images[0].image.startsWith('http')) {
-        ogImagePreview = product.images[0].image;
-      } else {
-        const filename = product.images[0].image.replace('/uploads/', '');
-        ogImagePreview = `${API_FILE_URL}/${filename}`;
-      }
-    }
-    
     setFormData({
       name: product.name || '',
       slug: product.slug || '',
-      basePrice: product.basePrice || product.price || '',
       description: product.description || '',
       category: product.category?._id || product.category || '',
       seller: product.seller || '',
-      stock: product.stock || '',
-      metaTitle: product.metaTitle || '',
-      metaDescription: product.metaDescription || '',
-      metaKeywords: product.metaKeywords ? product.metaKeywords.join(', ') : '',
-      canonicalUrl: product.canonicalUrl || '',
-      ogTitle: product.ogTitle || '',
-      ogDescription: product.ogDescription || '',
-      ogImageFile: null,
-      ogImagePreview: ogImagePreview,
-      ogImagePath: ogImagePath,
     });
-
-    // Images - FIXED: store the clean filenames
-    if (product.images && Array.isArray(product.images)) {
-      setExistingImages(product.images.filter(img => img.image));
-    } else {
-      setExistingImages([]);
-    }
 
     // Specifications
     if (product.specifications && Array.isArray(product.specifications) && product.specifications.length > 0) {
@@ -218,7 +144,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     }
 
     // Variants
-    if (hasVariants) {
+    if (product.variants && product.variants.length > 0) {
       setVariants(product.variants.map(variant => ({
         variantName: variant.variantName || '',
         price: variant.price || '',
@@ -236,47 +162,30 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     }
 
     // Reset states
-    setMainImageFiles([]);
-    setImagePreviews([]);
     setVariantImageFiles({});
     setVariantImagePreviews({});
     setNewKeyFeature('');
     setError('');
-    setDeletedMainImages([]);
     setDeletedVariantImages({});
-    setDeletedOgImage(null);
   };
 
   const resetForm = () => {
-    if (formData.ogImagePreview && formData.ogImagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(formData.ogImagePreview);
-    }
-    
     cleanupPreviews();
     
     setFormData({
-      name: '', slug: '', basePrice: '', description: '', category: '', seller: '', stock: '',
-      metaTitle: '', metaDescription: '', metaKeywords: '', canonicalUrl: '', 
-      ogTitle: '', ogDescription: '', ogImageFile: null, ogImagePreview: null, ogImagePath: '',
+      name: '', slug: '', description: '', category: '', seller: '',
     });
-    setMainImageFiles([]);
-    setExistingImages([]);
-    setImagePreviews([]);
     setError('');
     setAutoGenerateSlug(true);
     setSpecifications([]);
     setKeyFeatures([]);
     setNewKeyFeature('');
-    setActiveTab('simple');
     setExpandedSections({
       basic: true,
       category: true,
       variants: true,
-      specifications: true,
-      features: true,
-      images: true,
-      description: true,
-      seo: true
+      specifications: false,
+      features: false,
     });
     
     Object.values(variantImagePreviews).forEach(previews => {
@@ -284,12 +193,9 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     });
     
     setVariants([]);
-    setShowVariants(false);
     setVariantImageFiles({});
     setVariantImagePreviews({});
-    setDeletedMainImages([]);
     setDeletedVariantImages({});
-    setDeletedOgImage(null);
   };
 
   const toggleSection = (section) => {
@@ -339,7 +245,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     const variantNumber = variants.length + 1;
     const newVariant = {
       variantName: `Pack ${variantNumber}`,
-      price: formData.basePrice || '',
+      price: '',
       description: '',
       weight: '',
       weightUnit: 'gram',
@@ -351,14 +257,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     };
     
     setVariants([...variants, newVariant]);
-    setShowVariants(true);
-    
-    if (variants.length === 0) {
-      setMainImageFiles([]);
-      setImagePreviews([]);
-      setExistingImages([]);
-      setFormData(prev => ({ ...prev, description: '', stock: '' }));
-    }
   };
 
   const removeVariant = (index) => {
@@ -394,10 +292,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     
     setVariantImageFiles(updatedVariantFiles);
     setVariantImagePreviews(updatedVariantPreviews);
-    
-    if (updatedVariants.length === 0) {
-      setShowVariants(false);
-    }
   };
 
   const handleVariantImageChange = (e, variantIndex) => {
@@ -509,65 +403,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     setSpecifications(updatedSpecifications);
   };
 
-  const handleImageChange = (e) => {
-    if (variants.length > 0) {
-      setError("❌ Main product images are disabled when variants exist.\n\n✅ Please add images directly to each variant below.");
-      if (modalContentRef.current) modalContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-      e.target.value = '';
-      return;
-    }
-    
-    const files = Array.from(e.target.files);
-    
-    const previews = files.map(file => {
-      const preview = URL.createObjectURL(file);
-      previewUrls.current.add(preview);
-      return preview;
-    });
-    
-    setMainImageFiles(prev => [...prev, ...files]);
-    setImagePreviews(prev => [...prev, ...previews]);
-    
-    setError('');
-    e.target.value = '';
-  };
-
-  const removeExistingImage = (index) => {
-    const imageToDelete = existingImages[index];
-    setDeletedMainImages(prev => [...prev, imageToDelete.image]);
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeNewImageFile = (index) => {
-    const url = imagePreviews[index];
-    URL.revokeObjectURL(url);
-    previewUrls.current.delete(url);
-    
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    const newFiles = mainImageFiles.filter((_, i) => i !== index);
-    
-    setImagePreviews(newPreviews);
-    setMainImageFiles(newFiles);
-  };
-
-  const removeOgImage = () => {
-    if (formData.ogImagePreview && !formData.ogImagePreview.startsWith('blob:')) {
-      setDeletedOgImage(formData.ogImagePath || formData.ogImagePreview);
-    }
-    
-    if (formData.ogImagePreview?.startsWith('blob:')) {
-      URL.revokeObjectURL(formData.ogImagePreview);
-      previewUrls.current.delete(formData.ogImagePreview);
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      ogImageFile: null,
-      ogImagePreview: null,
-      ogImagePath: ''
-    }));
-  };
-
   const handleSlugToggle = (e) => {
     setAutoGenerateSlug(e.target.checked);
     if (e.target.checked && formData.name) {
@@ -583,23 +418,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
         ...prev,
         slug: generatedSlug
       }));
-    }
-  };
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setError('');
-    
-    if (tab === 'simple') {
-      setVariants([]);
-      setShowVariants(false);
-      setVariantImageFiles({});
-      setVariantImagePreviews({});
-    } else if (tab === 'variant') {
-      setMainImageFiles([]);
-      setImagePreviews([]);
-      setExistingImages([]);
-      setFormData(prev => ({ ...prev, description: '', stock: '' }));
     }
   };
 
@@ -639,67 +457,39 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       return;
     }
 
-    if (activeTab === 'variant' || variants.length > 0) {
-      if (variants.length === 0) {
-        setError('fieldId:add-variant-button|Please add at least one variant');
-        scrollToElement('add-variant-button');
-        return;
-      }
+    if (variants.length === 0) {
+      setError('fieldId:add-variant-button|Please add at least one variant');
+      scrollToElement('add-variant-button');
+      return;
+    }
 
-      for (let i = 0; i < variants.length; i++) {
-        const variant = variants[i];
-        if (!variant.variantName || variant.variantName.trim() === '') {
-          setError(`fieldId:variant-name-${i}|Variant #${i + 1} must have a name`);
-          scrollToElement(`variant-name-${i}`);
-          return;
-        }
-        if (!variant.price || variant.price === '' || parseFloat(variant.price) <= 0) {
-          setError(`fieldId:variant-price-${i}|Variant "${variant.variantName || 'Unnamed'}" must have a valid price`);
-          scrollToElement(`variant-price-${i}`);
-          return;
-        }
-        if (!variant.stock || variant.stock === '' || parseInt(variant.stock) < 0) {
-          setError(`fieldId:variant-stock-${i}|Variant "${variant.variantName || 'Unnamed'}" must have valid stock quantity`);
-          scrollToElement(`variant-stock-${i}`);
-          return;
-        }
-        const hasExistingImages = variant.images && variant.images.length > 0;
-        const hasNewImages = variantImageFiles[i] && variantImageFiles[i].length > 0;
-        if (!hasExistingImages && !hasNewImages) {
-          setError(`fieldId:variant-images-${i}|Variant "${variant.variantName || 'Unnamed'}" must have at least one image`);
-          scrollToElement(`variant-images-${i}`);
-          return;
-        }
-        if (!variant.description || variant.description.trim() === '') {
-          setError(`fieldId:variant-description-${i}|Variant "${variant.variantName || 'Unnamed'}" must have a description`);
-          scrollToElement(`variant-description-${i}`);
-          return;
-        }
-      }
-    } else {
-      if (!formData.basePrice || formData.basePrice === '' || parseFloat(formData.basePrice) <= 0) {
-        setError('fieldId:product-base-price|Please enter a valid base price');
-        scrollToElement('product-base-price');
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i];
+      if (!variant.variantName || variant.variantName.trim() === '') {
+        setError(`fieldId:variant-name-${i}|Variant #${i + 1} must have a name`);
+        scrollToElement(`variant-name-${i}`);
         return;
       }
-
-      if (!formData.description || formData.description.trim() === '') {
-        setError('fieldId:product-description|Please enter a product description');
-        scrollToElement('product-description');
+      if (!variant.price || variant.price === '' || parseFloat(variant.price) <= 0) {
+        setError(`fieldId:variant-price-${i}|Variant "${variant.variantName || 'Unnamed'}" must have a valid price`);
+        scrollToElement(`variant-price-${i}`);
         return;
       }
-
-      if (!formData.stock || formData.stock === '' || parseInt(formData.stock) < 0) {
-        setError('fieldId:product-stock|Please enter a valid stock quantity');
-        scrollToElement('product-stock');
+      if (!variant.stock || variant.stock === '' || parseInt(variant.stock) < 0) {
+        setError(`fieldId:variant-stock-${i}|Variant "${variant.variantName || 'Unnamed'}" must have valid stock quantity`);
+        scrollToElement(`variant-stock-${i}`);
         return;
       }
-      
-      const hasExistingImages = existingImages.length > 0;
-      const hasNewImages = mainImageFiles.length > 0;
+      const hasExistingImages = variant.images && variant.images.length > 0;
+      const hasNewImages = variantImageFiles[i] && variantImageFiles[i].length > 0;
       if (!hasExistingImages && !hasNewImages) {
-        setError('fieldId:product-images|Please upload at least one product image');
-        scrollToElement('product-images');
+        setError(`fieldId:variant-images-${i}|Variant "${variant.variantName || 'Unnamed'}" must have at least one image`);
+        scrollToElement(`variant-images-${i}`);
+        return;
+      }
+      if (!variant.description || variant.description.trim() === '') {
+        setError(`fieldId:variant-description-${i}|Variant "${variant.variantName || 'Unnamed'}" must have a description`);
+        scrollToElement(`variant-description-${i}`);
         return;
       }
     }
@@ -712,88 +502,46 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       
       // Add basic fields
       Object.keys(formData).forEach(key => {
-        const seoFieldsToSkip = ['metaTitle', 'metaDescription', 'metaKeywords', 'canonicalUrl', 'ogTitle', 'ogDescription', 'ogImageFile', 'ogImagePreview', 'ogImagePath'];
-        if (seoFieldsToSkip.includes(key)) {
-          return;
-        }
-        
         if (formData[key] !== '' && formData[key] !== null && formData[key] !== undefined) {
           submitData.append(key, formData[key]);
         }
       });
 
-      // Price and stock logic
-      if (variants.length > 0) {
-        const defaultVariant = variants.find(v => v.isDefault) || variants[0];
-        if (defaultVariant.price) {
-          submitData.set('basePrice', defaultVariant.price);
-          submitData.append('price', defaultVariant.price);
-        }
-        
-        const totalStock = variants.reduce((sum, variant) => sum + (parseInt(variant.stock) || 0), 0);
-        submitData.set('stock', totalStock.toString());
-        
-        submitData.append('hasOffer', 'false');
-      } else {
-        submitData.append('hasOffer', 'false');
-        submitData.append('stock', formData.stock);
+      if (!formData.description) {
+        submitData.append('description', 'Product with multiple variants');
       }
 
-      // Send deleted images
-      if (deletedMainImages.length > 0) {
-        submitData.append('deletedMainImages', JSON.stringify(deletedMainImages));
+      const defaultVariant = variants.find(v => v.isDefault) || variants[0];
+      if (defaultVariant.price) {
+        submitData.append('basePrice', defaultVariant.price);
+        submitData.append('price', defaultVariant.price);
       }
+      
+      const totalStock = variants.reduce((sum, variant) => sum + (parseInt(variant.stock) || 0), 0);
+      submitData.append('stock', totalStock.toString());
+      
+      submitData.append('hasOffer', 'false');
+
+      // Send deleted variant images
       if (Object.keys(deletedVariantImages).length > 0) {
         submitData.append('deletedVariantImages', JSON.stringify(deletedVariantImages));
       }
-      if (deletedOgImage) {
-        submitData.append('deletedOgImage', deletedOgImage);
-      }
-
-      // SEO Fields
-      const seoTextFields = ['metaTitle', 'metaDescription', 'canonicalUrl', 'ogTitle', 'ogDescription'];
-      seoTextFields.forEach(field => {
-        if (formData[field]?.trim()) {
-          submitData.append(field, formData[field].trim());
-        }
-      });
-
-      // Meta Keywords
-      if (formData.metaKeywords) {
-        let keywords = formData.metaKeywords;
-        if (typeof keywords === 'string' && keywords.trim() !== '') {
-          keywords = keywords
-            .split(',')
-            .map(k => k.trim())
-            .filter(k => k !== '');
-          submitData.append('metaKeywords', JSON.stringify(keywords));
-        }
-      }
-
-      // OG Image
-      if (formData.ogImageFile) {
-        submitData.append('ogImage', formData.ogImageFile);
-      } else if (formData.ogImagePath) {
-        submitData.append('ogImage', formData.ogImagePath);
-      }
 
       // Variants data
-      if (variants.length > 0) {
-        const variantsForJson = variants.map(variant => ({
-          variantName: variant.variantName.trim(),
-          price: parseFloat(variant.price),
-          description: variant.description?.trim() || '',
-          weight: variant.weight ? parseFloat(variant.weight) : 0,
-          weightUnit: variant.weightUnit || 'gram',
-          stock: parseInt(variant.stock),
-          images: variant.images || [],
-          sku: variant.sku?.trim() || '',
-          isDefault: variant.isDefault || false,
-          features: variant.features || []
-        }));
-        
-        submitData.append('variants', JSON.stringify(variantsForJson));
-      }
+      const variantsForJson = variants.map(variant => ({
+        variantName: variant.variantName.trim(),
+        price: parseFloat(variant.price),
+        description: variant.description?.trim() || '',
+        weight: variant.weight ? parseFloat(variant.weight) : 0,
+        weightUnit: variant.weightUnit || 'gram',
+        stock: parseInt(variant.stock),
+        images: variant.images || [],
+        sku: variant.sku?.trim() || '',
+        isDefault: variant.isDefault || false,
+        features: variant.features || []
+      }));
+      
+      submitData.append('variants', JSON.stringify(variantsForJson));
 
       // Specifications
       if (specifications.length > 0) {
@@ -808,13 +556,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       // Key Features
       if (keyFeatures.length > 0) {
         submitData.append('keyFeatures', JSON.stringify(keyFeatures));
-      }
-
-      // Main product images - ONLY when no variants
-      if (variants.length === 0) {
-        mainImageFiles.forEach(file => {
-          submitData.append('images', file);
-        });
       }
 
       // Variant images
@@ -876,411 +617,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
           )}
         </select>
       )}
-    </div>
-  );
-
-  const renderSimpleProduct = () => (
-    <div className="space-y-4">
-      {/* Basic Information */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-          onClick={() => toggleSection('basic')}
-        >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Info size={16} className="mr-2 text-gray-500" />
-            Basic Information
-          </h3>
-          {expandedSections.basic ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-        </div>
-        
-        {expandedSections.basic && (
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Product Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="product-name"
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
-                  placeholder="Enter product name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Seller <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="product-seller"
-                  type="text"
-                  name="seller"
-                  value={formData.seller}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
-                  placeholder="Enter seller name"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Slug <span className="text-red-500">*</span>
-                </label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="auto-slug"
-                      checked={autoGenerateSlug}
-                      onChange={handleSlugToggle}
-                      className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000] w-4 h-4"
-                    />
-                    <label htmlFor="auto-slug" className="text-xs text-gray-600">Auto-generate from name</label>
-                  </div>
-                  <input
-                    id="product-slug"
-                    type="text"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleInputChange}
-                    required
-                    disabled={autoGenerateSlug}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
-                    placeholder="product-slug"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Category & Pricing */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-          onClick={() => toggleSection('category')}
-        >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <DollarSign size={16} className="mr-2 text-gray-500" />
-            Category & Pricing
-          </h3>
-          {expandedSections.category ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-        </div>
-        
-        {expandedSections.category && (
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderCategorySelector()}
-              
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Base Price <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400 text-xs">₹</span>
-                  </div>
-                  <input
-                    id="product-base-price"
-                    type="text"
-                    name="basePrice"
-                    value={formData.basePrice}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="0.01"
-                    required
-                    className="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Stock <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="product-stock"
-                  type="text"
-                  name="stock"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
-                  placeholder="Enter stock quantity"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Images */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-          onClick={() => toggleSection('images')}
-        >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Image size={16} className="mr-2 text-gray-500" />
-            Product Images <span className="text-red-500 ml-1">*</span>
-          </h3>
-          {expandedSections.images ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-        </div>
-        
-        {expandedSections.images && (
-          <div className="p-4">
-            {/* Existing Images - FIXED: remove duplicate /uploads/ */}
-            {existingImages.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-medium text-gray-600 mb-2">Existing Images ({existingImages.length})</p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                  {existingImages.map((img, index) => {
-                    const filename = img.image.replace('/uploads/', '');
-                    return (
-                      <div key={index} className="relative group">
-                        <div className="w-full aspect-square bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-                          <img
-                            src={`${API_FILE_URL}/${filename}`}
-                            alt={`Product ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeExistingImage(index)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-lg hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* New Images Upload */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#ff0000] transition-colors">
-              <input
-                id="product-images"
-                type="file"
-                multiple
-                onChange={handleImageChange}
-                accept="image/*"
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#ff0000] file:text-white hover:file:bg-[#cc0000]"
-              />
-            </div>
-            {existingImages.length === 0 && mainImageFiles.length === 0 && (
-              <p className="text-xs text-amber-600 mt-2">⚠️ At least one image required</p>
-            )}
-            
-            {/* New Images Preview */}
-            {imagePreviews.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs font-medium text-gray-600 mb-2">New Images to Upload ({imagePreviews.length})</p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <div className="w-full aspect-square bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-                        <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeNewImageFile(index)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-lg hover:bg-red-600"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Description */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-          onClick={() => toggleSection('description')}
-        >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <FileText size={16} className="mr-2 text-gray-500" />
-            Description <span className="text-red-500 ml-1">*</span>
-          </h3>
-          {expandedSections.description ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-        </div>
-        
-        {expandedSections.description && (
-          <div className="p-4">
-            <textarea
-              id="product-description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              required
-              rows={4}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
-              placeholder="Enter product description"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Specifications */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-          onClick={() => toggleSection('specifications')}
-        >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Settings size={16} className="mr-2 text-gray-500" />
-            Specifications (Optional)
-          </h3>
-          <div className="flex items-center">
-            {specifications.length > 0 && (
-              <span className="mr-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
-                {specifications.length}
-              </span>
-            )}
-            {expandedSections.specifications ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-          </div>
-        </div>
-        
-        {expandedSections.specifications && (
-          <div className="p-4 space-y-3">
-            {specifications.length > 0 ? (
-              <div className="space-y-3">
-                {specifications.map((spec, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-xs font-medium text-gray-600">Specification #{index + 1}</h4>
-                      <button
-                        type="button"
-                        onClick={() => removeSpecification(index)}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={spec.key}
-                        onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                        placeholder="Key (e.g. Material)"
-                      />
-                      <input
-                        type="text"
-                        value={spec.value}
-                        onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                        placeholder="Value (e.g. Cotton)"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-4 bg-gray-50 rounded-lg text-center border border-gray-200">
-                <p className="text-xs text-gray-500">No specifications added yet.</p>
-              </div>
-            )}
-            
-            <button
-              type="button"
-              onClick={addSpecification}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
-            >
-              <Plus size={14} className="mr-1" />
-              Add Specification
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Key Features */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-          onClick={() => toggleSection('features')}
-        >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Package size={16} className="mr-2 text-gray-500" />
-            Key Features (Optional)
-          </h3>
-          <div className="flex items-center">
-            {keyFeatures.length > 0 && (
-              <span className="mr-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
-                {keyFeatures.length}
-              </span>
-            )}
-            {expandedSections.features ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-          </div>
-        </div>
-        
-        {expandedSections.features && (
-          <div className="p-4 space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={newKeyFeature}
-                onChange={(e) => setNewKeyFeature(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeyFeature())}
-                placeholder="Enter a key feature"
-                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
-              />
-              <button
-                type="button"
-                onClick={handleAddKeyFeature}
-                disabled={!newKeyFeature.trim()}
-                className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Plus size={16} className="mr-1" />
-                Add
-              </button>
-            </div>
-            
-            {keyFeatures.length > 0 && (
-              <div className="space-y-2 mt-3">
-                {keyFeatures.map((feature, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="text-sm text-gray-700 flex-1">{feature}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveKeyFeature(index)}
-                      className="ml-2 text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 
@@ -1571,7 +907,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       <div className="md:col-span-2">
                         <label className="block text-xs font-medium text-gray-500 mb-1">Variant Images *</label>
                         
-                        {/* Existing Images - FIXED: remove duplicate /uploads/ */}
+                        {/* Existing Images */}
                         {variant.images && variant.images.length > 0 && (
                           <div className="mb-3">
                             <p className="text-xs text-gray-500 mb-2">Existing Images:</p>
@@ -1669,7 +1005,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
         )}
       </div>
 
-      {/* Specifications (Same as simple) */}
+      {/* Specifications */}
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
         <div 
           className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
@@ -1743,7 +1079,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
         )}
       </div>
 
-      {/* Key Features (Same as simple) */}
+      {/* Key Features */}
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
         <div 
           className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
@@ -1807,180 +1143,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     </div>
   );
 
-  const renderSeoSettings = () => (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-      <div 
-        className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
-        onClick={() => toggleSection('seo')}
-      >
-        <h3 className="text-sm font-medium text-gray-700 flex items-center">
-          <Settings size={16} className="mr-2 text-gray-500" />
-          SEO Settings (Optional)
-        </h3>
-        {expandedSections.seo ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-      </div>
-      
-      {expandedSections.seo && (
-        <div className="p-4">
-          {/* OG Image Section */}
-          <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              OG Image (Social Media)
-            </label>
-            {formData.ogImagePreview ? (
-              <div className="relative inline-block">
-                <img
-                  src={formData.ogImagePreview}
-                  alt="OG Preview"
-                  className="h-20 w-20 object-cover rounded-lg border border-gray-200"
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-                <button
-                  type="button"
-                  onClick={removeOgImage}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-[#ff0000] transition-colors">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      const preview = URL.createObjectURL(file);
-                      setFormData(prev => ({
-                        ...prev,
-                        ogImageFile: file,
-                        ogImagePreview: preview,
-                        ogImagePath: ''
-                      }));
-                    }
-                  }}
-                  className="w-full text-sm text-gray-500"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Meta Title
-                <span className="ml-2 text-gray-400 text-[10px]">
-                  {formData.metaTitle?.length || 0}/60
-                </span>
-              </label>
-              <input
-                type="text"
-                name="metaTitle"
-                value={formData.metaTitle || ''}
-                onChange={handleInputChange}
-                maxLength="60"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                placeholder="Title for search engines"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Meta Description
-                <span className="ml-2 text-gray-400 text-[10px]">
-                  {formData.metaDescription?.length || 0}/160
-                </span>
-              </label>
-              <textarea
-                name="metaDescription"
-                value={formData.metaDescription || ''}
-                onChange={handleInputChange}
-                maxLength="160"
-                rows="2"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                placeholder="Description for search engines"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Meta Keywords
-              </label>
-              <input
-                type="text"
-                name="metaKeywords"
-                value={formData.metaKeywords || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                placeholder="keyword1, keyword2, keyword3"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Canonical URL
-              </label>
-              <input
-                type="text"
-                name="canonicalUrl"
-                value={formData.canonicalUrl || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                placeholder="https://yourstore.com/product-slug"
-              />
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                OG:Title (Social Media)
-              </label>
-              <input
-                type="text"
-                name="ogTitle"
-                value={formData.ogTitle || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                placeholder="Title for social sharing"
-              />
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                OG:Description (Social Media)
-              </label>
-              <textarea
-                name="ogDescription"
-                value={formData.ogDescription || ''}
-                onChange={handleInputChange}
-                rows="2"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
-                placeholder="Description for social sharing"
-              />
-            </div>
-          </div>
-          
-          {formData.metaTitle && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs font-medium text-gray-700 mb-2">Search Result Preview:</p>
-              <div className="border border-gray-200 rounded-lg p-3 bg-white">
-                <div className="text-blue-700 text-base font-medium truncate">
-                  {formData.metaTitle || 'Product Name'}
-                </div>
-                <div className="text-green-700 text-xs truncate">
-                  https://yourstore.com/products/{formData.slug || 'product-slug'}
-                </div>
-                <div className="text-gray-600 text-xs mt-1 line-clamp-2">
-                  {formData.metaDescription || 'Product description will appear here...'}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] m-0 overflow-hidden flex flex-col">
@@ -1991,9 +1153,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
               <Package size={20} className="mr-2 text-[#ff0000]" />
               Edit Product
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {variants.length > 0 ? 'Product with Variants' : 'Simple Product'}
-            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Product with Variants</p>
           </div>
           <button 
             onClick={handleClose} 
@@ -2014,8 +1174,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
           )}
 
           <div className="space-y-4">
-            {variants.length === 0 ? renderSimpleProduct() : renderVariantProduct()}
-            {renderSeoSettings()}
+            {renderVariantProduct()}
           </div>
 
           {/* Footer Buttons */}
