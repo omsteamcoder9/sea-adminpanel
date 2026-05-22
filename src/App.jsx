@@ -11,6 +11,7 @@ import OrdersPage from './pages/OrdersPage';
 import CustomerPage from './pages/CustomerPage';
 import Settings from './pages/Settings';
 import TermsManagement from './pages/TermsManagement';
+import DeliveryBoyStats from './pages/DeliveryBoyStats';
 import PrivacyManagement from './pages/PrivacyManagement';
 import DeliveryBoys from './pages/DeliveryBoys'; // ✅ ADD THIS IMPORT
 
@@ -62,6 +63,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+  path="/delivery-boys/:id/stats" 
+  element={
+    <ProtectedRoute adminOnly={true}>
+      <DeliveryBoyStats />
+    </ProtectedRoute>
+  } 
+/>
             
             {/* Categories */}
             <Route 

@@ -1,13 +1,14 @@
 // src/components/AddDeliveryBoyModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, Lock, MapPin, Car, Truck, UserPlus } from 'lucide-react';
+import { X, User, Phone, Mail, Lock, MapPin, Car, Truck, UserPlus, Check } from 'lucide-react';
+
 const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
-    wardId: '',
+    wardIds: [],  // ✅ CHANGED: array instead of single wardId
     vehicleType: 'bike',
     vehicleNumber: ''
   });
@@ -23,7 +24,7 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
         email: '',
         phone: '',
         password: '',
-        wardId: '',
+        wardIds: [],
         vehicleType: 'bike',
         vehicleNumber: ''
       });
@@ -34,6 +35,17 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // ✅ NEW: Handle multi-select for wards
+  const handleWardToggle = (wardId) => {
+    setFormData(prev => {
+      if (prev.wardIds.includes(wardId)) {
+        return { ...prev, wardIds: prev.wardIds.filter(id => id !== wardId) };
+      } else {
+        return { ...prev, wardIds: [...prev.wardIds, wardId] };
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -72,24 +84,19 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
       return;
     }
     
-    if (!formData.wardId) {
-      setError('Please select a ward');
+    if (formData.wardIds.length === 0) {
+      setError('Please select at least one ward');
       setLoading(false);
       return;
     }
     
     try {
-      // Find selected ward name
-      const selectedWard = wards.find(w => w.wardId === parseInt(formData.wardId));
-      const wardName = selectedWard ? selectedWard.wardName : `Ward ${formData.wardId}`;
-      
       const deliveryBoyData = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         password: formData.password,
-        wardId: parseInt(formData.wardId),
-        wardName: wardName,
+        wardIds: formData.wardIds,  // ✅ Send array of ward IDs
         vehicleType: formData.vehicleType,
         vehicleNumber: formData.vehicleNumber.trim()
       };
@@ -215,30 +222,34 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
             </div>
           </div>
 
-          {/* Select Ward */}
+          {/* ✅ CHANGED: Multi-select Wards */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assign Ward <span className="text-red-500">*</span>
+              Assign Wards <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                name="wardId"
-                value={formData.wardId}
-                onChange={handleChange}
-                required
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm appearance-none bg-white"
-              >
-                <option value="">Select a ward</option>
-                {wards.map((ward) => (
-                  <option key={ward.wardId} value={ward.wardId}>
-                    Ward {ward.wardId} - {ward.wardName}
-                  </option>
-                ))}
-              </select>
+            <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
+              {wards.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center">Loading wards...</p>
+              ) : (
+                <div className="space-y-2">
+                  {wards.map((ward) => (
+                    <label key={ward.wardId} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={formData.wardIds.includes(ward.wardId)}
+                        onChange={() => handleWardToggle(ward.wardId)}
+                        className="w-4 h-4 text-[#ff0000] rounded focus:ring-[#ff0000]"
+                      />
+                      <span className="text-sm text-gray-700">
+                        Ward {ward.wardId} - {ward.wardName}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Delivery boy will get orders from this ward automatically
+              Selected: {formData.wardIds.length} ward(s) - Delivery boy will receive orders from all selected wards
             </p>
           </div>
 

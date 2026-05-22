@@ -1,13 +1,15 @@
 // src/pages/DeliveryBoys.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 import AddDeliveryBoyModal from '../components/AddDeliveryBoyModal';
 import EditDeliveryBoyModal from '../components/EditDeliveryBoyModal';
 import { deliveryBoyAPI } from '../api/deliveryBoy';
-import { FaEdit, FaTrash, FaPlus, FaSignOutAlt, FaSyncAlt, FaSearch, FaTruck, FaMapMarkerAlt, FaCheckCircle, FaTimesCircle, FaHashtag } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSignOutAlt, FaSyncAlt, FaSearch, FaTruck, FaMapMarkerAlt, FaCheckCircle, FaTimesCircle, FaHashtag, FaChartLine } from 'react-icons/fa';
 
 const DeliveryBoys = () => {
+  const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -21,7 +23,6 @@ const DeliveryBoys = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Fetch delivery boys from API
   const fetchDeliveryBoys = async (showRefreshingState = false) => {
     try {
       if (showRefreshingState) {
@@ -57,7 +58,6 @@ const DeliveryBoys = () => {
     }
   };
 
-  // Fetch wards
   const fetchWards = async () => {
     try {
       const response = await deliveryBoyAPI.getWardsList();
@@ -72,11 +72,9 @@ const DeliveryBoys = () => {
     fetchWards();
   }, []);
 
-  // Search and filter logic
   useEffect(() => {
     let results = [...deliveryBoys];
 
-    // Search filter by name, phone, email
     if (searchTerm) {
       results = results.filter(boy =>
         boy.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,7 +83,6 @@ const DeliveryBoys = () => {
       );
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
       results = results.filter(boy => boy.status === statusFilter);
     }
@@ -93,7 +90,6 @@ const DeliveryBoys = () => {
     setFilteredDeliveryBoys(results);
   }, [searchTerm, statusFilter, deliveryBoys]);
 
-  // Handle manual refresh
   const handleRefresh = () => {
     fetchDeliveryBoys(true);
   };
@@ -177,27 +173,41 @@ const DeliveryBoys = () => {
     );
   };
 
+  const getWardDisplay = (boy) => {
+    if (boy.wardIds && boy.wardIds.length > 0) {
+      return {
+        ids: boy.wardIds,
+        numbers: boy.wardIds.sort((a, b) => a - b),
+        names: boy.wardNames || boy.wardIds.map(id => `Ward ${id}`)
+      };
+    }
+    if (boy.wardId) {
+      return {
+        ids: [boy.wardId],
+        numbers: [boy.wardId],
+        names: [boy.wardName || `Ward ${boy.wardId}`]
+      };
+    }
+    return { ids: [], numbers: [], names: [] };
+  };
+
   const deliveryBoysToRender = Array.isArray(filteredDeliveryBoys) ? filteredDeliveryBoys : [];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
 
-      {/* Main Content Area */}
       <div className="flex-1 w-full">
-        {/* Header */}
         <header className="bg-white shadow">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center">
               <FaTruck className="text-[#ff0000] mr-2" size={24} />
               <h1 className="text-xl font-bold text-gray-800">Delivery Boys Management</h1>
             </div>
-
             <div className="flex items-center">
               <button
                 onClick={logout}
                 className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center"
-                title="Logout"
               >
                 <span className="hidden sm:inline mr-2">Logout</span>
                 <FaSignOutAlt />
@@ -206,19 +216,16 @@ const DeliveryBoys = () => {
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="p-4 sm:p-6">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-700">
               All Delivery Boys ({deliveryBoysToRender.length})
             </h2>
             <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
-              {/* Refresh Button */}
               <button
                 onClick={handleRefresh}
                 disabled={loading || refreshing}
                 className="flex-1 sm:flex-none bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px] disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Refresh delivery boys"
               >
                 <FaSyncAlt className={`sm:mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">
@@ -226,7 +233,6 @@ const DeliveryBoys = () => {
                 </span>
               </button>
               
-              {/* Add Delivery Boy Button - Only for Admin */}
               {isAdmin && (
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -250,10 +256,9 @@ const DeliveryBoys = () => {
             </div>
           )}
 
-          {/* Search and Filter Section */}
-          <div className="mb-6 bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm">
+          {/* ✅ Optimized Search Bar - No Scroll */}
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search Input */}
               <div className="relative flex-1">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input
@@ -261,11 +266,10 @@ const DeliveryBoys = () => {
                   placeholder="Search by name, phone or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm md:text-base"
+                  className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
                 />
               </div>
               
-              {/* Status Filter */}
               <div className="sm:w-48">
                 <select
                   value={statusFilter}
@@ -280,7 +284,7 @@ const DeliveryBoys = () => {
             </div>
           </div>
 
-          {/* Delivery Boys Table */}
+          {/* ✅ Table with horizontal scroll only on table, NOT on page */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {loading ? (
               <div className="text-center py-8">
@@ -298,172 +302,156 @@ const DeliveryBoys = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                {/* Desktop/Large Tablet View */}
-                <table className="hidden md:table min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        S.No
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name & Contact
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ward ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ward Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Vehicle
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Deliveries
-                      </th>
-                      {isAdmin && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {deliveryBoysToRender.map((boy, index) => (
-                      <tr key={boy._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 text-center">
-                            {index + 1}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {boy.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {boy.phone} | {boy.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <FaHashtag className="text-gray-400 mr-1" size={12} />
-                            <span className="text-sm font-semibold text-gray-900">
-                              {boy.wardId || 'N/A'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <FaMapMarkerAlt className="text-gray-400 mr-1" size={12} />
-                            <span className="text-sm text-gray-700">
-                              {boy.wardName || `Ward ${boy.wardId}`}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-700 capitalize">
-                            {boy.vehicleType}
-                            {boy.vehicleNumber && (
-                              <div className="text-xs text-gray-400">{boy.vehicleNumber}</div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {getStatusBadge(boy.status)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-semibold text-gray-900">
-                            {boy.totalDeliveries || 0}
-                          </div>
-                        </td>
+              <>
+                {/* ✅ Table container with overflow-x-auto - ONLY table scrolls, not page */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-[1000px] md:min-w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name & Contact</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ward Numbers</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ward Names</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
                         {isAdmin && (
-                          <td className="px-6 py-4">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => openEditModal(boy)}
-                                className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
-                              >
-                                <FaEdit className="mr-1" /> Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDeliveryBoy(boy._id)}
-                                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
-                              >
-                                <FaTrash className="mr-1" /> Delete
-                              </button>
-                            </div>
-                          </td>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         )}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {deliveryBoysToRender.map((boy, index) => {
+                        const wardDisplay = getWardDisplay(boy);
+                        return (
+                          <tr key={boy._id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm font-medium text-gray-900">{boy.name}</div>
+                              <div className="text-xs text-gray-500">{boy.phone} | {boy.email}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {wardDisplay.numbers.map((wardNum, idx) => (
+                                  <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    <FaHashtag className="mr-0.5" size={8} />
+                                    {wardNum}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm text-gray-700">
+                                {wardDisplay.names.map((name, idx) => (
+                                  <div key={idx} className="flex items-center gap-1 py-0.5">
+                                    <FaMapMarkerAlt className="text-gray-400" size={10} />
+                                    <span className="text-xs">{name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm text-gray-700 capitalize">
+                                {boy.vehicleType}
+                                {boy.vehicleNumber && <div className="text-xs text-gray-400">{boy.vehicleNumber}</div>}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">{getStatusBadge(boy.status)}</td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm font-semibold text-gray-900">{boy.totalDeliveries || 0}</div>
+                            </td>
+                            {isAdmin && (
+                              <td className="px-4 py-3">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => navigate(`/delivery-boys/${boy._id}/stats`)}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium transition flex items-center gap-1"
+                                  >
+                                    <FaChartLine size={12} /> Stats
+                                  </button>
+                                  <button
+                                    onClick={() => openEditModal(boy)}
+                                    className="bg-[#ff0000] hover:bg-[#cc0000] text-white px-2 py-1 rounded text-xs font-medium transition flex items-center gap-1"
+                                  >
+                                    <FaEdit size={12} /> Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteDeliveryBoy(boy._id)}
+                                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-medium transition flex items-center gap-1"
+                                  >
+                                    <FaTrash size={12} /> Delete
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
 
-                {/* Mobile/Small Tablet View */}
+                {/* Mobile Card View */}
                 <div className="md:hidden">
                   <div className="divide-y divide-gray-200">
-                    {deliveryBoysToRender.map((boy, index) => (
-                      <div key={boy._id} className="p-4 hover:bg-gray-50">
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-2">
+                    {deliveryBoysToRender.map((boy, index) => {
+                      const wardDisplay = getWardDisplay(boy);
+                      return (
+                        <div key={boy._id} className="p-4">
+                          <div className="flex justify-between items-start mb-2">
                             <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
                             {getStatusBadge(boy.status)}
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {boy.name}
-                          </h3>
+                          <h3 className="text-base font-semibold text-gray-900">{boy.name}</h3>
                           <div className="text-sm text-gray-600 mt-1">
                             <div>{boy.phone}</div>
                             <div className="text-xs text-gray-400">{boy.email}</div>
                           </div>
-                          <div className="flex items-center mt-2 text-sm text-gray-600">
-                            <FaHashtag className="text-gray-400 mr-1" size={12} />
-                            <span className="font-semibold">Ward ID:</span>
-                            <span className="ml-1">{boy.wardId || 'N/A'}</span>
-                          </div>
-                          <div className="flex items-center mt-1 text-sm text-gray-600">
-                            <FaMapMarkerAlt className="text-gray-400 mr-1" size={12} />
-                            <span className="font-semibold">Ward:</span>
-                            <span className="ml-1">{boy.wardName || `Ward ${boy.wardId}`}</span>
+                          <div className="mt-2">
+                            <div className="flex items-center text-xs text-gray-600">
+                              <FaHashtag className="text-gray-400 mr-1" size={10} />
+                              <span className="font-semibold">Wards:</span>
+                              <span className="ml-1">{wardDisplay.numbers.join(', ')}</span>
+                            </div>
                           </div>
                           <div className="text-sm text-gray-600 capitalize mt-1">
                             Vehicle: {boy.vehicleType}
-                            {boy.vehicleNumber && ` (${boy.vehicleNumber})`}
                           </div>
                           <div className="text-sm text-gray-600 mt-1">
                             Deliveries: <span className="font-semibold">{boy.totalDeliveries || 0}</span>
                           </div>
-                          
                           {isAdmin && (
-                            <div className="flex space-x-2 mt-3">
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                onClick={() => navigate(`/delivery-boys/${boy._id}/stats`)}
+                                className="bg-purple-500 text-white px-3 py-1.5 rounded text-xs font-medium flex-1 flex items-center justify-center gap-1"
+                              >
+                                <FaChartLine size={12} /> Stats
+                              </button>
                               <button
                                 onClick={() => openEditModal(boy)}
-                                className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
+                                className="bg-[#ff0000] text-white px-3 py-1.5 rounded text-xs font-medium flex-1 flex items-center justify-center gap-1"
                               >
-                                <FaEdit className="mr-1" /> Edit
+                                <FaEdit size={12} /> Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteDeliveryBoy(boy._id)}
-                                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
+                                className="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-medium flex-1 flex items-center justify-center gap-1"
                               >
-                                <FaTrash className="mr-1" /> Delete
+                                <FaTrash size={12} /> Delete
                               </button>
                             </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </main>
 
-        {/* Add Delivery Boy Modal */}
         <AddDeliveryBoyModal 
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -471,7 +459,6 @@ const DeliveryBoys = () => {
           wards={wards}
         />
 
-        {/* Edit Delivery Boy Modal */}
         <EditDeliveryBoyModal 
           isOpen={isEditModalOpen}
           onClose={closeEditModal}

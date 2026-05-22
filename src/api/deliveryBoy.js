@@ -1,27 +1,39 @@
-// deliveryBoy.js - CORRECTED (no /api prefix since baseURL already has it)
+// src/api/deliveryBoy.js
 import api from './axiosConfig';
 
 export const deliveryBoyAPI = {
+  // ============ DELIVERY BOY PANEL (LOGIN REQUIRED) ============
+  
   // Delivery boy login
-  login: (credentials) => api.post('/delivery/login', credentials),  // ✅ Changed from /api/delivery/login
+  login: (credentials) => api.post('/delivery/login', credentials),
   
-  getProfile: () => api.get('/delivery/profile'),  // ✅ Changed
+  // Get delivery boy profile
+  getProfile: () => api.get('/delivery/profile'),
   
-  updateProfile: (profileData) => api.put('/delivery/profile', profileData),  // ✅ Changed
+  // Update delivery boy profile (vehicle, password)
+  updateProfile: (profileData) => api.put('/delivery/profile', profileData),
   
-  getStats: () => api.get('/delivery/stats'),  // ✅ Changed
+  // Get dashboard stats (today deliveries, pending, total)
+  getStats: () => api.get('/delivery/stats'),
   
-  getMyOrders: () => api.get('/delivery/orders'),  // ✅ Changed
+  // Get current assigned orders (pending + picked up)
+  getMyOrders: () => api.get('/delivery/orders'),
   
-  getOrderHistory: () => api.get('/delivery/orders/history'),  // ✅ Changed
+  // Get delivery history (delivered orders)
+  getOrderHistory: () => api.get('/delivery/orders/history'),
   
-  getOrderDetails: (orderId) => api.get(`/delivery/orders/${orderId}`),  // ✅ Changed
+  // Get single order details
+  getOrderDetails: (orderId) => api.get(`/delivery/orders/${orderId}`),
   
-  markPickedUp: (orderId) => api.put(`/delivery/orders/${orderId}/pickup`),  // ✅ Changed
+  // Mark order as picked up
+  markPickedUp: (orderId) => api.put(`/delivery/orders/${orderId}/pickup`),
   
-  markDelivered: (orderId) => api.put(`/delivery/orders/${orderId}/deliver`),  // ✅ Changed
+  // Mark order as delivered
+  markDelivered: (orderId) => api.put(`/delivery/orders/${orderId}/deliver`),
   
-  // Admin endpoints
+  // ============ ADMIN DELIVERY BOY MANAGEMENT ============
+  
+  // Get all delivery boys (Admin only)
   getAllDeliveryBoys: (params = {}) => {
     const { search, status, page = 1, limit = 20 } = params;
     const queryParams = new URLSearchParams();
@@ -30,23 +42,47 @@ export const deliveryBoyAPI = {
     if (search) queryParams.append('search', search);
     if (status && status !== 'all') queryParams.append('status', status);
     
-    return api.get(`/admin/delivery-boys?${queryParams.toString()}`);  // ✅ Changed (removed /api)
+    return api.get(`/admin/delivery-boys?${queryParams.toString()}`);
   },
   
-  getDeliveryBoyById: (id) => api.get(`/admin/delivery-boys/${id}`),  // ✅ Changed
+  // Get single delivery boy by ID (Admin only)
+  getDeliveryBoyById: (id) => api.get(`/admin/delivery-boys/${id}`),
   
-  addDeliveryBoy: (data) => api.post('/admin/delivery-boys', data),  // ✅ Changed
+  // Add new delivery boy (Admin only)
+  addDeliveryBoy: (data) => api.post('/admin/delivery-boys', data),
   
-  updateDeliveryBoy: (id, data) => api.put(`/admin/delivery-boys/${id}`, data),  // ✅ Changed
+  // Update delivery boy (Admin only)
+  updateDeliveryBoy: (id, data) => api.put(`/admin/delivery-boys/${id}`, data),
   
-  deleteDeliveryBoy: (id) => api.delete(`/admin/delivery-boys/${id}`),  // ✅ Changed
+  // Delete delivery boy (Admin only)
+  deleteDeliveryBoy: (id) => api.delete(`/admin/delivery-boys/${id}`),
   
-  getWardsList: () => api.get('/admin/wards'),  // ✅ Changed
+  // Get wards list for dropdown (Admin only)
+  getWardsList: () => api.get('/admin/wards'),
   
-  getUnassignedOrders: () => api.get('/admin/orders/unassigned'),  // ✅ Changed
+  // Get unassigned orders (Admin only)
+  getUnassignedOrders: () => api.get('/admin/orders/unassigned'),
   
+  // Manually assign order to delivery boy (Admin only)
   assignOrderToDeliveryBoy: (orderId, deliveryBoyId) => 
-    api.post('/admin/orders/assign', { orderId, deliveryBoyId }),  // ✅ Changed
+    api.post('/admin/orders/assign', { orderId, deliveryBoyId }),
   
-  getDeliveryBoyStats: () => api.get('/admin/delivery/stats'),  // ✅ Changed
+  // ✅ FIXED: Get delivery boy stats by ID (Admin only)
+  getDeliveryBoyStats: (id) => api.get(`/admin/delivery-boys/${id}/stats`),
+  
+  // ✅ ADD THIS: Get delivery boy orders with filters (Admin only)
+  getDeliveryBoyOrders: (id, params = {}) => {
+    const { status, page = 1, limit = 20 } = params;
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page);
+    queryParams.append('limit', limit);
+    if (status && status !== 'all') queryParams.append('status', status);
+    
+    return api.get(`/admin/delivery-boys/${id}/orders?${queryParams.toString()}`);
+  },
+  
+  // Get delivery boy stats for dashboard overview (Admin only)
+  getDeliveryBoyStatsOverview: () => api.get('/admin/delivery/stats'),
 };
+
+export default deliveryBoyAPI;

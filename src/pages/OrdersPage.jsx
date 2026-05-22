@@ -211,7 +211,8 @@ const OrdersPage = () => {
         '⚠️ Are you sure you want to cancel this order?\n\n' +
         'This will:\n' +
         '• Restore product stock\n' +
-        '• Send cancellation notification'
+        '• Send cancellation notification\n' +
+        '• Remove delivery boy assignment'
       );
       if (!confirmCancel) return;
     }
@@ -243,6 +244,7 @@ const OrdersPage = () => {
               ? { 
                   ...order, 
                   orderStatus: newStatus,
+                  deliveryStatus: response.data.order?.deliveryStatus || order.deliveryStatus,
                   paymentStatus: response.data.order?.paymentStatus || order.paymentStatus
                 }
               : order
@@ -340,16 +342,36 @@ const OrdersPage = () => {
     return allPaymentStatuses.filter(status => allowedStatuses.includes(status.value));
   };
 
-const isRefundable = (order) => {
-  if (!order) return false;
-  
-  const isCancelled = order.orderStatus === 'cancelled';
-  const hasPaid = order.paymentStatus === 'completed';
-  const notAlreadyRefunded = order.refundStatus !== 'completed';
-  
-  // Only show refund button for cancelled orders that are paid and not yet refunded
-  return isCancelled && hasPaid && notAlreadyRefunded;
-};
+  // ✅ ADDED: Get Delivery Status Badge
+  const getDeliveryStatusBadge = (status) => {
+    if (!status) return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unassigned</span>;
+    
+    const statusConfig = {
+      unassigned: { color: 'bg-gray-100 text-gray-800', label: 'Unassigned' },
+      assigned: { color: 'bg-blue-100 text-blue-800', label: 'Assigned' },
+      picked_up: { color: 'bg-yellow-100 text-yellow-800', label: 'Picked Up' },
+      delivered: { color: 'bg-green-100 text-green-800', label: 'Delivered' },
+      returned: { color: 'bg-red-100 text-red-800', label: 'Returned' }
+    };
+    
+    const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', label: status };
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const isRefundable = (order) => {
+    if (!order) return false;
+    
+    const isCancelled = order.orderStatus === 'cancelled';
+    const hasPaid = order.paymentStatus === 'completed';
+    const notAlreadyRefunded = order.refundStatus !== 'completed';
+    
+    return isCancelled && hasPaid && notAlreadyRefunded;
+  };
 
   const processRefund = async (order) => {
     console.log('🔍 Starting refund process for order:', {
@@ -1193,10 +1215,10 @@ const isRefundable = (order) => {
                                 </div>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Items</p>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {order.products?.length || 0} items
-                                </p>
+                                <p className="text-xs text-gray-500">Delivery Status</p>
+                                <div className="mt-1">
+                                  {getDeliveryStatusBadge(order.deliveryStatus)}
+                                </div>
                               </div>
                             </div>
                             
@@ -1330,6 +1352,9 @@ const isRefundable = (order) => {
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">
                             Order Status {userRole === 'admin' && '(Update)'}
                           </th>
+                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">
+                            Delivery Status
+                          </th>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[160px]">
                             Payment Status {userRole === 'admin' && '(Update)'}
                           </th>
@@ -1387,6 +1412,11 @@ const isRefundable = (order) => {
                                 ) : (
                                   getStatusBadge(order.orderStatus)
                                 )}
+                              </td>
+                              
+                              {/* Delivery Status Column */}
+                              <td className="px-3 py-4 whitespace-nowrap">
+                                {getDeliveryStatusBadge(order.deliveryStatus)}
                               </td>
                               
                               <td className="px-3 py-4 whitespace-nowrap">
