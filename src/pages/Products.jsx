@@ -514,24 +514,38 @@ const Products = () => {
   const getPriceDisplay = (product) => {
     return product.basePrice || product.price || '0';
   };
-const getProductImage = (product) => {
-  // Check main images first
-  if (product.images && product.images.length > 0 && product.images[0]?.image) {
-    const filename = product.images[0].image.replace('/uploads/', '');
-    return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
-  }
   
-  // Check variant images
-  if (product.variants && product.variants.length > 0) {
-    const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
-    if (defaultVariant.images && defaultVariant.images.length > 0 && defaultVariant.images[0]?.image) {
-      const filename = defaultVariant.images[0].image.replace('/uploads/', '');
+  const getProductImage = (product) => {
+    // Check main images first
+    if (product.images && product.images.length > 0 && product.images[0]?.image) {
+      const filename = product.images[0].image.replace('/uploads/', '');
       return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
     }
-  }
-  
-  return null;
-};
+    
+    // Check variant images
+    if (product.variants && product.variants.length > 0) {
+      const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
+      if (defaultVariant.images && defaultVariant.images.length > 0 && defaultVariant.images[0]?.image) {
+        const filename = defaultVariant.images[0].image.replace('/uploads/', '');
+        return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper function to get variant stock display
+  const getVariantStockDisplay = (product) => {
+    if (product.variants && product.variants.length > 0) {
+      return product.variants.map(variant => (
+        <div key={variant._id || variant.name} className="text-xs">
+          {variant.name}: <span className="font-medium">{variant.stock || 0}</span> in stock
+        </div>
+      ));
+    }
+    return null;
+  };
+
   // Get sort button label based on current option
   const getSortLabel = () => {
     switch (sortOption) {
@@ -599,15 +613,21 @@ const getProductImage = (product) => {
           </div>
           <div>
             <p className="text-xs text-gray-500">Stock</p>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${ 
-              totalStock > 10 
-                ? 'bg-green-100 text-green-800' 
-                : totalStock > 0 
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-red-100 text-red-800'
-            }`}>
-              {totalStock} in stock
-            </span>
+            {product.variants && product.variants.length > 0 ? (
+              <div className="space-y-1 mt-1">
+                {getVariantStockDisplay(product)}
+              </div>
+            ) : (
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${ 
+                totalStock > 10 
+                  ? 'bg-green-100 text-green-800' 
+                  : totalStock > 0 
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+              }`}>
+                {totalStock} in stock
+              </span>
+            )}
           </div>
           <div>
             <p className="text-xs text-gray-500">Seller</p>
@@ -880,7 +900,15 @@ const getProductImage = (product) => {
                                   <td className="px-3 py-4"><div className="text-sm font-medium text-gray-900">{product.name}</div><div className="text-xs text-gray-500 truncate max-w-[200px]">{product.description}</div></td>
                                   <td className="px-3 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">₹{priceDisplay}</div></td>
                                   <td className="px-3 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{categoryName}</div></td>
-                                  <td className="px-3 py-4 whitespace-nowrap"><span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${totalStock > 10 ? 'bg-green-100 text-green-800' : totalStock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{totalStock} in stock</span></td>
+                                  <td className="px-3 py-4">
+                                    {product.variants && product.variants.length > 0 ? (
+                                      <div className="space-y-1">
+                                        {getVariantStockDisplay(product)}
+                                      </div>
+                                    ) : (
+                                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${totalStock > 10 ? 'bg-green-100 text-green-800' : totalStock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{totalStock} in stock</span>
+                                    )}
+                                  </td>
                                   <td className="px-3 py-4 whitespace-nowrap"><div className="text-sm text-gray-500 truncate max-w-[100px]">{sellerName}</div></td>
                                   <td className="px-3 py-4 whitespace-nowrap"><span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{product.status || 'active'}</span></td>
                                   {isAdmin && (
@@ -895,7 +923,9 @@ const getProductImage = (product) => {
                               );
                             })
                           ) : (
-                            <tr><td colSpan={isAdmin ? "9" : "8"} className="px-6 py-8 text-center text-gray-500">No products found</td></tr>
+                            <tr>
+                              <td colSpan={isAdmin ? "9" : "8"} className="px-6 py-8 text-center text-gray-500">No products found</td>
+                            </tr>
                           )}
                         </tbody>
                       </table>
