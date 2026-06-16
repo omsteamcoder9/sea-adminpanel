@@ -243,7 +243,7 @@ const AddPrivacyModal = ({ isOpen, onClose, onAddPrivacy }) => {
           {activeTab === 'rights' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-700">User Rights</label>
+                <label className="block text-sm font-medium text-gray-600">User Rights</label>
                 <button type="button" onClick={() => addArrayItem('privacyUserRights', '')} className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"><Plus size={16} /> Add Right</button>
               </div>
               {formData.privacyUserRights.map((item, index) => (
