@@ -139,17 +139,7 @@ const CustomerDetailsModal = ({ customer, onClose, onDeactivate, onDelete }) => 
 
         {/* Action Buttons */}
         <div className="sticky bottom-0 bg-white border-t border-slate-200 p-6 flex items-center justify-end gap-3">
-          <button
-            onClick={() => onDeactivate(customer)}
-            className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
-              customer.isActive 
-                ? 'text-amber-600 hover:bg-amber-50 border border-amber-200' 
-                : 'text-green-600 hover:bg-green-50 border border-green-200'
-            }`}
-          >
-            {customer.isActive ? <UserX size={18} /> : <UserCheck size={18} />}
-            {customer.isActive ? 'Deactivate' : 'Reactivate'}
-          </button>
+   
           <button
             onClick={() => onDelete(customer)}
             className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-colors flex items-center gap-2"
