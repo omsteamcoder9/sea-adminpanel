@@ -421,9 +421,6 @@ const CustomerPage = () => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Customer
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Contact
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -447,17 +444,6 @@ const CustomerPage = () => {
                             className="hover:bg-gray-50 transition-colors cursor-pointer"
                             onClick={() => openDetailsModal(customer)}
                           >
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-full flex items-center justify-center text-white font-semibold">
-                                  {customer.name?.charAt(0).toUpperCase() || 'U'}
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">{customer.name || 'Unnamed User'}</p>
-                                  <p className="text-xs text-gray-500">ID: {customer._id?.slice(-6)}</p>
-                                </div>
-                              </div>
-                            </td>
                             <td className="py-4 px-6">
                               <div className="space-y-1">
                                 {customer.email && (

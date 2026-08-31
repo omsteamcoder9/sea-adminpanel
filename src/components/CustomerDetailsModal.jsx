@@ -16,7 +16,7 @@ import {
   UserCheck
 } from 'lucide-react';
 
-const CustomerDetailsModal = ({ customer, onClose, onDeactivate, onDelete }) => {
+const CustomerDetailsModal = ({ customer, onClose, onDeactivate }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -53,7 +53,6 @@ const CustomerDetailsModal = ({ customer, onClose, onDeactivate, onDelete }) => 
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-800">{customer.name}</h3>
-              <p className="text-slate-600">{customer.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${customer.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   {customer.isActive ? 'Active' : 'Inactive'}
@@ -70,23 +69,23 @@ const CustomerDetailsModal = ({ customer, onClose, onDeactivate, onDelete }) => 
             {/* Contact Information */}
             <div className="bg-slate-50 rounded-xl p-5 border border-[#ff0000]/10">
               <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-[#ff0000]" />
+                <Phone className="w-5 h-5 text-[#ff0000]" />
                 Contact Information
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-[#ff0000]" />
+                  <Phone className="w-4 h-4 text-[#ff0000]" />
                   <div>
-                    <p className="text-sm text-slate-500">Email</p>
-                    <p className="font-medium">{customer.email}</p>
+                    <p className="text-sm text-slate-500">Phone Number</p>
+                    <p className="font-medium">{customer.phoneNumber || customer.phone || 'N/A'}</p>
                   </div>
                 </div>
-                {customer.phone && (
+                {customer.email && (
                   <div className="flex items-center gap-3">
-                    <Phone className="w-4 h-4 text-[#ff0000]" />
+                    <Mail className="w-4 h-4 text-[#ff0000]" />
                     <div>
-                      <p className="text-sm text-slate-500">Phone</p>
-                      <p className="font-medium">{customer.phone}</p>
+                      <p className="text-sm text-slate-500">Email</p>
+                      <p className="font-medium">{customer.email}</p>
                     </div>
                   </div>
                 )}
@@ -139,13 +138,12 @@ const CustomerDetailsModal = ({ customer, onClose, onDeactivate, onDelete }) => 
 
         {/* Action Buttons */}
         <div className="sticky bottom-0 bg-white border-t border-slate-200 p-6 flex items-center justify-end gap-3">
-   
           <button
-            onClick={() => onDelete(customer)}
+            onClick={() => onDeactivate(customer)}
             className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-colors flex items-center gap-2"
           >
             <Trash2 size={18} />
-            Delete Customer
+            Deactivate Customer
           </button>
         </div>
       </div>
