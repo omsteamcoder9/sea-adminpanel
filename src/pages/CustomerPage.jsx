@@ -112,7 +112,6 @@ const CustomerPage = () => {
     } catch (error) {
       console.error('Error fetching customers:', error);
       console.error('Error response:', error.response?.data);
-      alert(error.response?.data?.message || 'Failed to fetch customers');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -156,30 +155,25 @@ const CustomerPage = () => {
     setFilteredCustomers(results);
   }, [searchTerm, selectedType, customers]);
 
-  // Handle customer deletion
-  const handleDelete = async () => {
+  // Handle customer deactivation
+  const handleDeactivate = async () => {
     if (!customerToAction) return;
     
-    console.log('Deleting customer:', customerToAction._id);
-    
     try {
-      await adminAPI.deleteUser(customerToAction._id);
+      await adminAPI.deactivateUser(customerToAction._id);
       
-      // Remove from local state
-      setCustomers(prev => prev.filter(c => c._id !== customerToAction._id));
+      setCustomers(prev => prev.map(c => 
+        c._id === customerToAction._id ? { ...c, isActive: false } : c
+      ));
       setIsDeleteModalOpen(false);
       setCustomerToAction(null);
-      
-      // Show success message
-      alert('User deleted successfully');
     } catch (error) {
-      console.error('Delete error:', error);
-      alert(error.response?.data?.message || 'Failed to delete user');
+      console.error('Deactivate error:', error);
     }
   };
 
   // Open modals
-  const openDeleteModal = (customer, e) => {
+  const openDeactivateModal = (customer, e) => {
     if (e) e.stopPropagation();
     setCustomerToAction(customer);
     setIsDeleteModalOpen(true);
@@ -278,12 +272,12 @@ const CustomerPage = () => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            openDeleteModal(customer, e);
+            openDeactivateModal(customer, e);
           }}
           className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-200 flex items-center justify-center gap-2"
         >
           <Trash2 size={16} />
-          <span>Delete</span>
+          <span>Deactivate</span>
         </button>
       </div>
     </div>
@@ -324,55 +318,54 @@ const CustomerPage = () => {
             </button>
           </div>
         </header>
-            {/* Refresh Button */}
-          <div className="mb-4 flex justify-end mt-3">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm disabled:opacity-50 gap-2"
-            >
-              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-              <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-            </button>
-          </div>
+            
+        {/* Refresh Button */}
+        <div className="mb-4 flex justify-end mt-3">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm disabled:opacity-50 gap-2"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
         
-
-                  {/* Filters and Search */}
-          <div className="mb-6 bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-              {/* Search */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, or phone..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm md:text-base"
-                  />
-                </div>
+        {/* Filters and Search */}
+        <div className="mb-6 bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or phone..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm md:text-base"
+                />
               </div>
-              
-
-              {/* Type Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="text-gray-400 w-4 h-4 md:w-5 md:h-5" />
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ff0000] text-sm md:text-base"
-                >
-                  <option value="all">All Users</option>
-                  <option value="admin">Admins Only</option>
-                  <option value="user">Regular Users Only</option>
-                  <option value="active">Active Only</option>
-                  <option value="inactive">Inactive Only</option>
-                </select>
-              </div>
-              
             </div>
+            
+            {/* Type Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="text-gray-400 w-4 h-4 md:w-5 md:h-5" />
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ff0000] text-sm md:text-base"
+              >
+                <option value="all">All Users</option>
+                <option value="admin">Admins Only</option>
+                <option value="user">Regular Users Only</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
+            </div>
+            
           </div>
+        </div>
 
         {/* Main Content */}
         <main className="p-4 md:p-6">
@@ -401,10 +394,6 @@ const CustomerPage = () => {
               </p>
             </div>
           </div>
-
-      
-
-
 
           {/* Results Count */}
           <div className="mb-4">
@@ -501,12 +490,12 @@ const CustomerPage = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openDeleteModal(customer, e);
+                                  openDeactivateModal(customer, e);
                                 }}
                                 className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200 flex items-center gap-2"
                               >
                                 <Trash2 size={16} />
-                                Delete
+                                Deactivate
                               </button>
                             </td>
                           </tr>
@@ -532,19 +521,19 @@ const CustomerPage = () => {
           <CustomerDetailsModal
             customer={selectedCustomer}
             onClose={() => setIsDetailsModalOpen(false)}
-            onDelete={openDeleteModal}
+            onDeactivate={openDeactivateModal}
           />
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Deactivate Confirmation Modal */}
         {isDeleteModalOpen && customerToAction && (
           <ConfirmationModal
             isOpen={isDeleteModalOpen}
-            title="Delete Customer"
-            message={`Are you sure you want to delete ${customerToAction.name || 'this user'}?`}
-            confirmText="Delete"
+            title="Deactivate Customer"
+            message={`Are you sure you want to deactivate ${customerToAction.name || 'this user'}?`}
+            confirmText="Deactivate"
             cancelText="Cancel"
-            onConfirm={handleDelete}
+            onConfirm={handleDeactivate}
             onClose={() => setIsDeleteModalOpen(false)}
             type="danger"
           />

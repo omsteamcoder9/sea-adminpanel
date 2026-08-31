@@ -7,6 +7,6 @@ export const adminAPI = {
     return api.get('/admin/users');
   },
   editUser: (id, userData) => api.put(`/admin/users/${id}`, userData),
-  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+deleteUser: (id) => api.delete(`/admin/users/${id}?permanent=true`),
   deactivateUser: (id) => api.patch(`/admin/users/${id}/deactivate`),
 };
