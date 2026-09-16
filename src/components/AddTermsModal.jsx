@@ -121,296 +121,591 @@ const AddTermsModal = ({ isOpen, onClose, onAddTerms }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50 overflow-y-auto"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white rounded-xl w-full max-w-4xl shadow-xl my-8 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white z-10 flex justify-between items-center px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">Add Terms of Service</h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-[#ff0000] transition-colors"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b px-6">
-          <div className="flex gap-4">
+    <>
+      {/* ================= MOBILE LAYOUT (< 768px) ================= */}
+      <div
+        className="md:hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex flex-col"
+        onClick={handleBackdropClick}
+      >
+        <div
+          className="bg-white w-full h-full flex flex-col overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
+            <h2 className="text-base font-semibold text-gray-800 truncate pr-2">
+              Add Terms of Service
+            </h2>
             <button
-              type="button"
-              onClick={() => setActiveTab('basic')}
-              className={`py-2 px-4 font-medium transition-colors ${
-                activeTab === 'basic'
-                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              onClick={onClose}
+              className="p-1.5 -mr-1 text-gray-500 hover:text-[#ff0000] rounded-full"
+              aria-label="Close"
             >
-              Basic Info
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('requirements')}
-              className={`py-2 px-4 font-medium transition-colors ${
-                activeTab === 'requirements'
-                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              User Requirements
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('sections')}
-              className={`py-2 px-4 font-medium transition-colors ${
-                activeTab === 'sections'
-                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Terms Sections
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('legal')}
-              className={`py-2 px-4 font-medium transition-colors ${
-                activeTab === 'legal'
-                  ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Legal Info
+              <X size={20} />
             </button>
           </div>
-        </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Basic Info Tab */}
-          {activeTab === 'basic' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Terms of Service Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="termsOfServiceTitle"
-                  value={formData.termsOfServiceTitle}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                  placeholder="Enter title"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Important Notice
-                </label>
-                <textarea
-                  name="termsImportantNotice"
-                  value={formData.termsImportantNotice}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                  placeholder="Enter important notice"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* User Requirements Tab */}
-          {activeTab === 'requirements' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-700">
-                  User Requirements
-                </label>
+          {/* Tab strip — horizontally scrollable, pill-style */}
+          <div className="border-b px-3 overflow-x-auto scrollbar-hide flex-shrink-0">
+            <div className="flex gap-2 min-w-max py-2">
+              {[
+                { key: 'basic', label: 'Basic' },
+                { key: 'requirements', label: 'Requirements' },
+                { key: 'sections', label: 'Sections' },
+                { key: 'legal', label: 'Legal' },
+              ].map((tab) => (
                 <button
+                  key={tab.key}
                   type="button"
-                  onClick={addRequirement}
-                  className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                    activeTab === tab.key
+                      ? 'bg-[#ff0000] text-white'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
                 >
-                  <Plus size={16} /> Add Requirement
+                  {tab.label}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Form body — scrollable */}
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+            id="mobile-terms-form"
+          >
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2.5 rounded-lg text-xs">
+                {error}
               </div>
-              
-              {formData.termsUserRequirements.map((requirement, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex-1">
+            )}
+
+            {/* Basic Info Tab */}
+            {activeTab === 'basic' && (
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="termsOfServiceTitle"
+                    value={formData.termsOfServiceTitle}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
+                    placeholder="Enter title"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Important Notice
+                  </label>
+                  <textarea
+                    name="termsImportantNotice"
+                    value={formData.termsImportantNotice}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm resize-none"
+                    placeholder="Enter important notice"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* User Requirements Tab */}
+            {activeTab === 'requirements' && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Requirements ({formData.termsUserRequirements.length})
+                  </p>
+                  <button
+                    type="button"
+                    onClick={addRequirement}
+                    className="text-xs font-semibold text-[#ff0000] flex items-center gap-1 bg-red-50 px-2.5 py-1.5 rounded-full active:scale-95 transition-transform"
+                  >
+                    <Plus size={14} /> Add
+                  </button>
+                </div>
+
+                {formData.termsUserRequirements.map((requirement, index) => (
+                  <div key={index} className="flex gap-2 items-start bg-gray-50 p-2 rounded-lg border border-gray-200">
+                    <span className="text-xs font-bold text-gray-400 mt-2.5 w-5 flex-shrink-0 text-center">
+                      {index + 1}
+                    </span>
                     <input
                       type="text"
                       value={requirement}
                       onChange={(e) => handleRequirementChange(index, e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                      className="flex-1 min-w-0 px-2.5 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
                       placeholder={`Requirement ${index + 1}`}
                     />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeRequirement(index)}
-                    className="text-red-500 hover:text-red-700 p-2"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Terms Sections Tab */}
-          {activeTab === 'sections' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-700">
-                  Terms Sections
-                </label>
-                <button
-                  type="button"
-                  onClick={addSection}
-                  className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
-                >
-                  <Plus size={16} /> Add Section
-                </button>
-              </div>
-              
-              {formData.termsSections.map((section, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <GripVertical size={16} className="text-gray-400" />
-                      <span className="text-sm font-medium text-gray-500">Section {section.number}</span>
-                    </div>
                     <button
                       type="button"
-                      onClick={() => removeSection(index)}
-                      className="text-red-500 hover:text-red-700"
+                      onClick={() => removeRequirement(index)}
+                      className="text-red-500 p-2 flex-shrink-0 active:scale-90 transition-transform"
+                      aria-label="Remove"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Section Title
-                    </label>
-                    <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => handleSectionChange(index, 'title', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                      placeholder="Section title"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Section Content
-                    </label>
-                    <textarea
-                      value={section.content}
-                      onChange={(e) => handleSectionChange(index, 'content', e.target.value)}
-                      rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                      placeholder="Section content"
-                    />
-                  </div>
+                ))}
+
+                {formData.termsUserRequirements.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-6">
+                    No requirements added yet
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Terms Sections Tab */}
+            {activeTab === 'sections' && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Sections ({formData.termsSections.length})
+                  </p>
+                  <button
+                    type="button"
+                    onClick={addSection}
+                    className="text-xs font-semibold text-[#ff0000] flex items-center gap-1 bg-red-50 px-2.5 py-1.5 rounded-full active:scale-95 transition-transform"
+                  >
+                    <Plus size={14} /> Add
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {/* Legal Info Tab */}
-          {activeTab === 'legal' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Intellectual Property
-                </label>
-                <textarea
-                  name="termsIntellectualProperty"
-                  value={formData.termsIntellectualProperty}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                  placeholder="Intellectual property content"
-                />
+                {formData.termsSections.map((section, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                    {/* Section header */}
+                    <div className="flex items-center justify-between bg-gray-50 px-3 py-2 border-b border-gray-200">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <GripVertical size={14} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-xs font-bold text-gray-600">
+                          Section {section.number}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSection(index)}
+                        className="text-red-500 p-1 active:scale-90 transition-transform"
+                        aria-label="Remove section"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    {/* Section fields */}
+                    <div className="p-3 space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => handleSectionChange(index, 'title', e.target.value)}
+                          className="w-full px-2.5 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
+                          placeholder="Section title"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Content
+                        </label>
+                        <textarea
+                          value={section.content}
+                          onChange={(e) => handleSectionChange(index, 'content', e.target.value)}
+                          rows="3"
+                          className="w-full px-2.5 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm resize-none"
+                          placeholder="Section content"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Limitation of Liability
-                </label>
-                <textarea
-                  name="termsLimitationLiability"
-                  value={formData.termsLimitationLiability}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                  placeholder="Limitation of liability content"
-                />
+            {/* Legal Info Tab */}
+            {activeTab === 'legal' && (
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Intellectual Property
+                  </label>
+                  <textarea
+                    name="termsIntellectualProperty"
+                    value={formData.termsIntellectualProperty}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm resize-none"
+                    placeholder="Intellectual property content"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Limitation of Liability
+                  </label>
+                  <textarea
+                    name="termsLimitationLiability"
+                    value={formData.termsLimitationLiability}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm resize-none"
+                    placeholder="Limitation of liability content"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Changes Notice
+                  </label>
+                  <textarea
+                    name="termsChangesNotice"
+                    value={formData.termsChangesNotice}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm resize-none"
+                    placeholder="Changes notice content"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Contact Information
+                  </label>
+                  <textarea
+                    name="termsContactInfo"
+                    value={formData.termsContactInfo}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm resize-none"
+                    placeholder="Contact information"
+                  />
+                </div>
               </div>
+            )}
+          </form>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Changes Notice
-                </label>
-                <textarea
-                  name="termsChangesNotice"
-                  value={formData.termsChangesNotice}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                  placeholder="Changes notice content"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Information
-                </label>
-                <textarea
-                  name="termsContactInfo"
-                  value={formData.termsContactInfo}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-                  placeholder="Contact information"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          {/* Sticky footer action bar */}
+          <div className="flex gap-2 px-4 py-3 border-t bg-white flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg active:scale-[0.98] transition-transform"
             >
               Cancel
             </button>
             <button
               type="submit"
+              form="mobile-terms-form"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-lg hover:from-[#cc0000] hover:to-[#aa0000] disabled:opacity-50 transition-all duration-200 shadow-md"
+              className="flex-1 py-3 text-sm font-semibold text-white bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-lg active:scale-[0.98] disabled:opacity-50 transition-transform shadow-md"
             >
-              {loading ? 'Adding...' : 'Add Terms of Service'}
+              {loading ? 'Adding...' : 'Add Terms'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
+
+      {/* ================= DESKTOP LAYOUT (>= 768px) — ORIGINAL ================= */}
+      <div
+        className="hidden md:flex fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-3 z-50 overflow-y-auto"
+        onClick={handleBackdropClick}
+      >
+        <div className="bg-white rounded-xl w-full max-w-4xl shadow-xl my-8 max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white z-10 flex justify-between items-center px-6 py-4 border-b">
+            <h2 className="text-xl font-semibold text-gray-800">Add Terms of Service</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-[#ff0000] transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b px-6">
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab('basic')}
+                className={`py-2 px-4 font-medium transition-colors ${
+                  activeTab === 'basic'
+                    ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Basic Info
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('requirements')}
+                className={`py-2 px-4 font-medium transition-colors ${
+                  activeTab === 'requirements'
+                    ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                User Requirements
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('sections')}
+                className={`py-2 px-4 font-medium transition-colors ${
+                  activeTab === 'sections'
+                    ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Terms Sections
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('legal')}
+                className={`py-2 px-4 font-medium transition-colors ${
+                  activeTab === 'legal'
+                    ? 'text-[#ff0000] border-b-2 border-[#ff0000]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Legal Info
+              </button>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Basic Info Tab */}
+            {activeTab === 'basic' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Terms of Service Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="termsOfServiceTitle"
+                    value={formData.termsOfServiceTitle}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                    placeholder="Enter title"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Important Notice
+                  </label>
+                  <textarea
+                    name="termsImportantNotice"
+                    value={formData.termsImportantNotice}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                    placeholder="Enter important notice"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* User Requirements Tab */}
+            {activeTab === 'requirements' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="block text-sm font-medium text-gray-700">
+                    User Requirements
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addRequirement}
+                    className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
+                  >
+                    <Plus size={16} /> Add Requirement
+                  </button>
+                </div>
+
+                {formData.termsUserRequirements.map((requirement, index) => (
+                  <div key={index} className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={requirement}
+                        onChange={(e) => handleRequirementChange(index, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                        placeholder={`Requirement ${index + 1}`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeRequirement(index)}
+                      className="text-red-500 hover:text-red-700 p-2"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Terms Sections Tab */}
+            {activeTab === 'sections' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Terms Sections
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addSection}
+                    className="text-sm text-[#ff0000] hover:text-[#cc0000] flex items-center gap-1"
+                  >
+                    <Plus size={16} /> Add Section
+                  </button>
+                </div>
+
+                {formData.termsSections.map((section, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <GripVertical size={16} className="text-gray-400" />
+                        <span className="text-sm font-medium text-gray-500">Section {section.number}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSection(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Section Title
+                      </label>
+                      <input
+                        type="text"
+                        value={section.title}
+                        onChange={(e) => handleSectionChange(index, 'title', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                        placeholder="Section title"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Section Content
+                      </label>
+                      <textarea
+                        value={section.content}
+                        onChange={(e) => handleSectionChange(index, 'content', e.target.value)}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                        placeholder="Section content"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Legal Info Tab */}
+            {activeTab === 'legal' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Intellectual Property
+                  </label>
+                  <textarea
+                    name="termsIntellectualProperty"
+                    value={formData.termsIntellectualProperty}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                    placeholder="Intellectual property content"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Limitation of Liability
+                  </label>
+                  <textarea
+                    name="termsLimitationLiability"
+                    value={formData.termsLimitationLiability}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                    placeholder="Limitation of liability content"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Changes Notice
+                  </label>
+                  <textarea
+                    name="termsChangesNotice"
+                    value={formData.termsChangesNotice}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                    placeholder="Changes notice content"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Contact Information
+                  </label>
+                  <textarea
+                    name="termsContactInfo"
+                    value={formData.termsContactInfo}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
+                    placeholder="Contact information"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-lg hover:from-[#cc0000] hover:to-[#aa0000] disabled:opacity-50 transition-all duration-200 shadow-md"
+              >
+                {loading ? 'Adding...' : 'Add Terms of Service'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
   );
 };
 

@@ -307,16 +307,16 @@ const Settings = () => {
       <div className="flex-1 min-w-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10 px-4 py-3 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-              <p className="text-sm text-gray-600 mt-1">Configure your store settings and preferences</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Settings</h1>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 truncate">Configure your store settings and preferences</p>
             </div>
 
             {/* Logout Button */}
             <button
               onClick={logout}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 sm:px-4 py-2 rounded-lg transition duration-200 flex items-center flex-shrink-0"
               title="Logout"
             >
               <span className="hidden sm:inline mr-2">Logout</span>
@@ -327,19 +327,18 @@ const Settings = () => {
 
         {/* Main Content */}
         <main className="p-3 sm:p-4 md:p-6">
-          {/* Refresh Button */}
-          <div className="flex justify-end mb-4">
+          {/* Refresh Button — properly aligned for mobile */}
+          <div className="mb-4">
             <button
               onClick={fetchSettings}
               disabled={loading}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 sm:py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto sm:ml-auto flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 sm:py-2 rounded-lg transition duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] sm:min-h-[42px] sm:float-right"
               title="Refresh settings"
             >
-              <FaSyncAlt className={`sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">
-                {loading ? 'Refreshing...' : 'Refresh'}
-              </span>
+              <FaSyncAlt className={loading ? 'animate-spin' : ''} />
+              <span>{loading ? 'Refreshing...' : ''}</span>
             </button>
+            <div className="clear-both"></div>
           </div>
 
           {/* Notification Banner */}

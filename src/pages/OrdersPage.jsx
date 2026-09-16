@@ -75,12 +75,10 @@ const OrdersPage = () => {
 
     let result = [...orders];
 
-    // Apply status filter
     if (selectedStatus !== 'all') {
       result = result.filter(order => order.orderStatus === selectedStatus);
     }
 
-    // Apply search filter
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
       result = result.filter(order => {
@@ -96,7 +94,6 @@ const OrdersPage = () => {
       });
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       switch (sortOption) {
         case 'newest':
@@ -342,9 +339,8 @@ const OrdersPage = () => {
     return allPaymentStatuses.filter(status => allowedStatuses.includes(status.value));
   };
 
-  // ✅ ADDED: Get Delivery Status Badge
   const getDeliveryStatusBadge = (status) => {
-    if (!status) return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unassigned</span>;
+    if (!status) return <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800">Unassigned</span>;
     
     const statusConfig = {
       unassigned: { color: 'bg-gray-100 text-gray-800', label: 'Unassigned' },
@@ -357,7 +353,7 @@ const OrdersPage = () => {
     const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', label: status };
     
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${config.color}`}>
         {config.label}
       </span>
     );
@@ -563,6 +559,21 @@ const OrdersPage = () => {
     }
   };
 
+  // Short date for table (no time)
+  const formatShortDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: '2-digit',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -570,6 +581,10 @@ const OrdersPage = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  };
+
+  const formatCurrencyCompact = (amount) => {
+    return `₹${Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   const getStatusBadge = (status) => {
@@ -587,7 +602,7 @@ const OrdersPage = () => {
     };
     
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
+      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -604,7 +619,7 @@ const OrdersPage = () => {
     };
     
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${paymentStatusColors[paymentStatus] || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
+      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${paymentStatusColors[paymentStatus] || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
         {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1).replace('_', ' ')}
       </span>
     );
@@ -630,6 +645,12 @@ const OrdersPage = () => {
     }
     
     return order._id || order.id || order.orderId;
+  };
+
+  // Truncate order ID for table
+  const truncateOrderId = (order) => {
+    const id = order.orderId || order.orderNumber || order._id || '';
+    return id.length > 12 ? id.slice(-8) : id;
   };
 
   const totalOrders = orders.length;
@@ -887,16 +908,16 @@ const OrdersPage = () => {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       
-      <div className="flex-1 w-full">
+      <div className="flex-1 w-full min-w-0">
         <header className="bg-white shadow sticky top-0 z-10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-800">Orders Management</h1>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3">
+            <div className="flex items-center min-w-0">
+              <h1 className="text-base sm:text-xl font-bold text-gray-800 truncate">Orders Management</h1>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center flex-shrink-0">
               <button
                 onClick={logout}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center"
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 sm:px-4 py-2 rounded-lg transition duration-200 flex items-center"
                 title="Logout"
               >
                 <span className="hidden sm:inline mr-2">Logout</span>
@@ -906,10 +927,10 @@ const OrdersPage = () => {
           </div>
         </header>
 
-        <main className="p-4 sm:p-6">
-          <div className="mb-6 flex flex-col space-y-4">
+        <main className="p-3 sm:p-4 lg:p-6">
+          <div className="mb-4 sm:mb-6 flex flex-col space-y-3 sm:space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 flex items-center">
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-700 flex items-center">
                 <FaTag className="mr-2 text-[#ff0000]" />
                 All Orders ({filteredOrders.length})
               </h2>
@@ -917,7 +938,7 @@ const OrdersPage = () => {
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="flex-1 sm:flex-none bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 sm:py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 sm:flex-none bg-gray-500 hover:bg-gray-600 text-white px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg flex items-center justify-center transition duration-200 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Refresh orders"
                 >
                   <FaSyncAlt className={`sm:mr-2 ${refreshing ? 'animate-spin' : ''}`} />
@@ -928,8 +949,8 @@ const OrdersPage = () => {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-              <div className="flex flex-col space-y-3">
+            <div className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200">
+              <div className="flex flex-col space-y-2 sm:space-y-3">
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                   <div className="flex-1">
                     <input
@@ -937,20 +958,20 @@ const OrdersPage = () => {
                       placeholder="Search by order ID, customer name, email, or phone..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
+                      className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-xs sm:text-sm"
                     />
                   </div>
 
                   <div className="relative flex-1">
                     <button
                       onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3 sm:px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-xs sm:text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent transition-all duration-200"
                     >
                       <span className="truncate">
                         <Filter className="inline mr-2 text-gray-400" size={14} />
                         {getStatusLabel()}
                       </span>
-                      <svg className={`w-4 h-4 ml-2 transition-transform ${statusDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-4 h-4 ml-2 transition-transform flex-shrink-0 ${statusDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
@@ -976,13 +997,13 @@ const OrdersPage = () => {
                   <div className="relative flex-1">
                     <button
                       onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent transition-all duration-200"
+                      className="w-full flex items-center justify-between px-3 sm:px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-xs sm:text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent transition-all duration-200"
                     >
-                      <div className="flex items-center">
-                        <FaSortAmountDown className="mr-2 text-gray-400" />
+                      <div className="flex items-center min-w-0">
+                        <FaSortAmountDown className="mr-2 text-gray-400 flex-shrink-0" />
                         <span className="truncate">{getSortLabel()}</span>
                       </div>
-                      <svg className={`w-4 h-4 ml-2 transition-transform ${sortDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-4 h-4 ml-2 transition-transform flex-shrink-0 ${sortDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
@@ -1033,7 +1054,7 @@ const OrdersPage = () => {
                   {(selectedStatus !== 'all' || sortOption !== 'newest' || searchTerm) && (
                     <button
                       onClick={clearFilters}
-                      className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200 sm:w-auto"
+                      className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200 sm:w-auto"
                     >
                       Clear Filters
                     </button>
@@ -1044,7 +1065,7 @@ const OrdersPage = () => {
           </div>
 
           {error && (
-            <div className={`px-4 py-3 rounded mb-4 text-sm ${
+            <div className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded mb-4 text-xs sm:text-sm ${
               error.includes('✅') 
                 ? 'bg-green-50 border border-green-200 text-green-700' 
                 : 'bg-red-50 border border-red-200 text-red-700'
@@ -1056,13 +1077,13 @@ const OrdersPage = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Total Orders</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mt-1 sm:mt-2">{totalOrders}</p>
+                <div className="min-w-0">
+                  <p className="text-gray-500 text-[10px] sm:text-xs lg:text-sm font-medium truncate">Total Orders</p>
+                  <p className="text-base sm:text-xl lg:text-2xl font-bold text-gray-800 mt-0.5 sm:mt-1">{totalOrders}</p>
                 </div>
-                <div className="p-1 sm:p-2 bg-[#ff0000]/10 rounded-lg">
+                <div className="p-1 sm:p-2 bg-[#ff0000]/10 rounded-lg flex-shrink-0">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-[#ff0000] to-[#cc0000] rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">T</span>
+                    <span className="text-white font-bold text-[10px] sm:text-sm">T</span>
                   </div>
                 </div>
               </div>
@@ -1070,13 +1091,13 @@ const OrdersPage = () => {
 
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Pending Orders</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600 mt-1 sm:mt-2">{pendingOrders}</p>
+                <div className="min-w-0">
+                  <p className="text-gray-500 text-[10px] sm:text-xs lg:text-sm font-medium truncate">Pending Orders</p>
+                  <p className="text-base sm:text-xl lg:text-2xl font-bold text-yellow-600 mt-0.5 sm:mt-1">{pendingOrders}</p>
                 </div>
-                <div className="p-1 sm:p-2 bg-yellow-50 rounded-lg">
+                <div className="p-1 sm:p-2 bg-yellow-50 rounded-lg flex-shrink-0">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">P</span>
+                    <span className="text-white font-bold text-[10px] sm:text-sm">P</span>
                   </div>
                 </div>
               </div>
@@ -1084,13 +1105,13 @@ const OrdersPage = () => {
 
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Delivered Orders</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mt-1 sm:mt-2">{deliveredOrders}</p>
+                <div className="min-w-0">
+                  <p className="text-gray-500 text-[10px] sm:text-xs lg:text-sm font-medium truncate">Delivered Orders</p>
+                  <p className="text-base sm:text-xl lg:text-2xl font-bold text-green-600 mt-0.5 sm:mt-1">{deliveredOrders}</p>
                 </div>
-                <div className="p-1 sm:p-2 bg-green-50 rounded-lg">
+                <div className="p-1 sm:p-2 bg-green-50 rounded-lg flex-shrink-0">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">D</span>
+                    <span className="text-white font-bold text-[10px] sm:text-sm">D</span>
                   </div>
                 </div>
               </div>
@@ -1098,13 +1119,13 @@ const OrdersPage = () => {
 
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Cancelled Orders</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1 sm:mt-2">{cancelledOrders}</p>
+                <div className="min-w-0">
+                  <p className="text-gray-500 text-[10px] sm:text-xs lg:text-sm font-medium truncate">Cancelled Orders</p>
+                  <p className="text-base sm:text-xl lg:text-2xl font-bold text-red-600 mt-0.5 sm:mt-1">{cancelledOrders}</p>
                 </div>
-                <div className="p-1 sm:p-2 bg-red-50 rounded-lg">
+                <div className="p-1 sm:p-2 bg-red-50 rounded-lg flex-shrink-0">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">C</span>
+                    <span className="text-white font-bold text-[10px] sm:text-sm">C</span>
                   </div>
                 </div>
               </div>
@@ -1149,7 +1170,7 @@ const OrdersPage = () => {
               <>
                 {isMobile ? (
                   <div className="p-2">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {filteredOrders.map((order, index) => {
                         const customer = getCustomerInfo(order);
                         const orderId = getOrderId(order);
@@ -1159,63 +1180,63 @@ const OrdersPage = () => {
                         const paymentStatusOptionsList = getPaymentStatusOptions(order.paymentStatus);
                         
                         return (
-                          <div key={order._id || order.id} className="bg-white rounded-lg shadow border border-gray-200 p-4">
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex items-center space-x-3">
-                                <div className="text-sm font-medium text-gray-500">#{index + 1}</div>
-                                <div>
-                                  <h3 className="text-base font-semibold text-gray-900">
+                          <div key={order._id || order.id} className="bg-white rounded-lg shadow border border-gray-200 p-3">
+                            <div className="flex justify-between items-start mb-2.5">
+                              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                <div className="text-xs font-medium text-gray-500 flex-shrink-0">#{index + 1}</div>
+                                <div className="min-w-0">
+                                  <h3 className="text-sm font-semibold text-gray-900 truncate">
                                     Order: {order.orderId || order.orderNumber || order._id?.substring(-6)}
                                   </h3>
-                                  <p className="text-xs text-gray-500 mt-1">
+                                  <p className="text-[11px] text-gray-500 mt-0.5">
                                     {formatDate(order.createdAt || order.orderDate || order.date)}
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
+                              <div className="text-right flex-shrink-0 ml-2">
                                 <div className="mb-1">
                                   {getStatusBadge(order.orderStatus)}
                                 </div>
-                                <span className="text-sm font-bold text-gray-900">
+                                <span className="text-xs font-bold text-gray-900">
                                   {formatCurrency(order.finalAmount || order.totalAmount || 0)}
                                 </span>
                               </div>
                             </div>
                             
-                            <div className="mb-3">
+                            <div className="mb-2.5">
                               <div className="flex items-center">
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-xs font-medium text-gray-900 truncate">
                                   {customer.name}
                                 </p>
                                 {customer.isGuest && (
-                                  <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                  <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded-full flex-shrink-0">
                                     Guest
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-500 truncate">
+                              <p className="text-[11px] text-gray-500 truncate">
                                 {customer.email}
                               </p>
                             </div>
                             
                             {order.wardName && (
                               <div className="mb-2">
-                                <p className="text-xs text-gray-500">Ward</p>
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-[11px] text-gray-500">Ward</p>
+                                <p className="text-xs font-medium text-gray-900">
                                   Ward {order.wardId}: {order.wardName}
                                 </p>
                               </div>
                             )}
                             
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="grid grid-cols-2 gap-2.5 mb-2.5">
                               <div>
-                                <p className="text-xs text-gray-500">Payment</p>
+                                <p className="text-[11px] text-gray-500">Payment</p>
                                 <div className="mt-1">
                                   {getPaymentStatusBadge(order.paymentStatus)}
                                 </div>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Delivery Status</p>
+                                <p className="text-[11px] text-gray-500">Delivery Status</p>
                                 <div className="mt-1">
                                   {getDeliveryStatusBadge(order.deliveryStatus)}
                                 </div>
@@ -1225,12 +1246,12 @@ const OrdersPage = () => {
                             {userRole === 'admin' && (
                               <>
                                 <div className="mb-2">
-                                  <p className="text-xs text-gray-500 mb-1">Order Status</p>
+                                  <p className="text-[11px] text-gray-500 mb-1">Order Status</p>
                                   <select
                                     value={order.orderStatus}
                                     onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
                                     disabled={statusUpdating[order._id]}
-                                    className={`w-full text-sm border rounded-lg px-3 py-2 ${
+                                    className={`w-full text-xs border rounded-lg px-2.5 py-1.5 ${
                                       statusUpdating[order._id] 
                                         ? 'bg-gray-100 cursor-not-allowed' 
                                         : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
@@ -1245,12 +1266,12 @@ const OrdersPage = () => {
                                 </div>
                                 
                                 <div className="mb-3">
-                                  <p className="text-xs text-gray-500 mb-1">Payment Status</p>
+                                  <p className="text-[11px] text-gray-500 mb-1">Payment Status</p>
                                   <select
                                     value={order.paymentStatus}
                                     onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value)}
                                     disabled={statusUpdating[order._id]}
-                                    className={`w-full text-sm border rounded-lg px-3 py-2 ${
+                                    className={`w-full text-xs border rounded-lg px-2.5 py-1.5 ${
                                       statusUpdating[order._id] 
                                         ? 'bg-gray-100 cursor-not-allowed' 
                                         : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
@@ -1263,7 +1284,7 @@ const OrdersPage = () => {
                                     ))}
                                   </select>
                                   {statusUpdating[order._id] && (
-                                    <div className="text-xs text-[#ff0000] mt-1">
+                                    <div className="text-[11px] text-[#ff0000] mt-1">
                                       Updating...
                                     </div>
                                   )}
@@ -1271,10 +1292,10 @@ const OrdersPage = () => {
                               </>
                             )}
                             
-                            <div className="flex space-x-2 pt-2 border-t border-gray-100">
+                            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100">
                               <button
                                 onClick={() => fetchOrderReceipt(orderId)}
-                                className="flex-1 bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-200"
+                                className="flex-1 min-w-[calc(50%-4px)] bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition duration-200"
                               >
                                 View Receipt
                               </button>
@@ -1286,7 +1307,7 @@ const OrdersPage = () => {
                                     orderId: order._id, 
                                     orderNumber: order.orderId || order.orderNumber || order._id 
                                   })}
-                                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-200"
+                                  className="flex-1 min-w-[calc(50%-4px)] bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition duration-200"
                                 >
                                   Delete
                                 </button>
@@ -1296,7 +1317,7 @@ const OrdersPage = () => {
                                 <button
                                   onClick={() => processRefund(order)}
                                   disabled={refundLoading && activeRefundOrderId === order._id}
-                                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition duration-200 ${
+                                  className={`flex-1 min-w-[calc(50%-4px)] px-2.5 py-1.5 rounded-lg text-xs font-medium transition duration-200 ${
                                     refundLoading && activeRefundOrderId === order._id
                                       ? 'bg-gradient-to-r from-green-400 to-green-500 text-white cursor-not-allowed'
                                       : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
@@ -1305,17 +1326,17 @@ const OrdersPage = () => {
                                   {refundLoading && activeRefundOrderId === order._id ? 'Processing...' : 'Refund'}
                                 </button>
                               ) : (
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-[calc(50%-4px)]">
                                   {order.refundStatus === 'completed' ? (
-                                    <span className="block px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200 text-center">
+                                    <span className="block px-2.5 py-1.5 bg-green-100 text-green-800 text-xs rounded-lg border border-green-200 text-center">
                                       ✅ Refunded
                                     </span>
                                   ) : order.paymentStatus === 'refunded' ? (
-                                    <span className="block px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200 text-center">
+                                    <span className="block px-2.5 py-1.5 bg-green-100 text-green-800 text-xs rounded-lg border border-green-200 text-center">
                                       Refunded
                                     </span>
                                   ) : (
-                                    <span className="block px-3 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg border border-gray-200 text-center">
+                                    <span className="block px-2.5 py-1.5 bg-gray-100 text-gray-600 text-xs rounded-lg border border-gray-200 text-center">
                                       {order.orderStatus}
                                     </span>
                                   )}
@@ -1324,7 +1345,7 @@ const OrdersPage = () => {
                             </div>
                             
                             {currentRefundStatus && (
-                              <div className={`mt-2 px-3 py-2 text-xs rounded-lg text-center ${
+                              <div className={`mt-2 px-2.5 py-1.5 text-[11px] rounded-lg text-center ${
                                 currentRefundStatus.status === 'success' ? 'bg-green-100 text-green-800' :
                                 currentRefundStatus.status === 'error' ? 'bg-red-100 text-red-800' :
                                 'bg-blue-100 text-blue-800'
@@ -1339,27 +1360,23 @@ const OrdersPage = () => {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-500">
-                      ← Scroll horizontally to see all columns →
-                    </div>
-                    
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200 table-fixed">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">S.No</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Order ID</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">
-                            Order Status {userRole === 'admin' && '(Update)'}
+                          <th className="w-[50px] px-2 py-2.5 text-center text-[10px] font-semibold text-gray-600 uppercase tracking-wider">#</th>
+                          <th className="w-[100px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Order</th>
+                          <th className="w-[90px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                          <th className="w-[110px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                            Order{userRole === 'admin' && ' ⚙'}
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">
-                            Delivery Status
+                          <th className="w-[100px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                            Delivery
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[160px]">
-                            Payment Status {userRole === 'admin' && '(Update)'}
+                          <th className="w-[120px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                            Payment{userRole === 'admin' && ' ⚙'}
                           </th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Items</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">Actions</th>
+                          <th className="w-[100px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Items</th>
+                          <th className="w-[220px] px-2 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -1373,60 +1390,58 @@ const OrdersPage = () => {
                           
                           return (
                             <tr key={order._id || order.id} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-3 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900 text-center">
-                                  {index + 1}
+                              <td className="px-2 py-3 text-center">
+                                <div className="text-xs font-medium text-gray-500">{index + 1}</div>
+                              </td>
+                              <td className="px-2 py-3">
+                                <div className="text-xs font-semibold text-gray-900 font-mono truncate" title={order.orderId || order.orderNumber || order._id}>
+                                  #{truncateOrderId(order)}
+                                </div>
+                                <div className="text-[10px] text-gray-500 truncate" title={customer.name}>
+                                  {customer.name}
                                 </div>
                               </td>
-                              <td className="px-3 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900 font-mono">
-                                  {order.orderId || order.orderNumber || order._id?.substring(-6)}
+                              <td className="px-2 py-3">
+                                <div className="text-[11px] text-gray-700 whitespace-nowrap">
+                                  {formatShortDate(order.createdAt || order.orderDate || order.date)}
                                 </div>
                               </td>
-                              <td className="px-3 py-4 whitespace-nowrap">
-                                <div className="text-xs sm:text-sm text-gray-900">
-                                  {formatDate(order.createdAt || order.orderDate || order.date)}
-                                </div>
-                              </td>
-                            
-                              <td className="px-3 py-4 whitespace-nowrap">
+                              
+                              <td className="px-2 py-3">
                                 {userRole === 'admin' ? (
-                                  <div className="flex flex-col gap-1">
-                                    <select
-                                      value={order.orderStatus}
-                                      onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
-                                      disabled={statusUpdating[order._id]}
-                                      className={`text-xs border rounded px-2 py-1 w-full max-w-[140px] ${
-                                        statusUpdating[order._id] 
-                                          ? 'bg-gray-100 cursor-not-allowed' 
-                                          : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
-                                      }`}
-                                    >
-                                      {statusOptionsList.map(option => (
-                                        <option key={option.value} value={option.value}>
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
+                                  <select
+                                    value={order.orderStatus}
+                                    onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
+                                    disabled={statusUpdating[order._id]}
+                                    className={`text-[10px] border rounded px-1.5 py-1 w-full ${
+                                      statusUpdating[order._id] 
+                                        ? 'bg-gray-100 cursor-not-allowed' 
+                                        : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
+                                    }`}
+                                  >
+                                    {statusOptionsList.map(option => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
                                 ) : (
                                   getStatusBadge(order.orderStatus)
                                 )}
                               </td>
                               
-                              {/* Delivery Status Column */}
-                              <td className="px-3 py-4 whitespace-nowrap">
+                              <td className="px-2 py-3">
                                 {getDeliveryStatusBadge(order.deliveryStatus)}
                               </td>
                               
-                              <td className="px-3 py-4 whitespace-nowrap">
+                              <td className="px-2 py-3">
                                 {userRole === 'admin' ? (
                                   <div className="flex flex-col gap-1">
                                     <select
                                       value={order.paymentStatus}
                                       onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value)}
                                       disabled={statusUpdating[order._id]}
-                                      className={`text-xs border rounded px-2 py-1 w-full max-w-[160px] ${
+                                      className={`text-[10px] border rounded px-1.5 py-1 w-full ${
                                         statusUpdating[order._id] 
                                           ? 'bg-gray-100 cursor-not-allowed' 
                                           : 'bg-white cursor-pointer focus:ring-2 focus:ring-[#ff0000] focus:border-transparent'
@@ -1440,12 +1455,12 @@ const OrdersPage = () => {
                                     </select>
                                     
                                     {statusUpdating[order._id] && (
-                                      <div className="flex items-center gap-1 text-xs text-[#ff0000]">
-                                        <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <div className="flex items-center gap-1 text-[10px] text-[#ff0000]">
+                                        <svg className="animate-spin h-2.5 w-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Updating...
+                                        Updating
                                       </div>
                                     )}
                                   </div>
@@ -1453,21 +1468,21 @@ const OrdersPage = () => {
                                   getPaymentStatusBadge(order.paymentStatus)
                                 )}
                               </td>
-                              <td className="px-3 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
+                              <td className="px-2 py-3">
+                                <div className="text-[11px] text-gray-700 whitespace-nowrap">
                                   {order.products?.length || 0} items
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  {formatCurrency(order.finalAmount || order.totalAmount || 0)}
+                                <div className="text-[10px] font-semibold text-gray-900 whitespace-nowrap">
+                                  {formatCurrencyCompact(order.finalAmount || order.totalAmount || 0)}
                                 </div>
                               </td>
-                              <td className="px-3 py-4 whitespace-nowrap">
-                                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                              <td className="px-2 py-3">
+                                <div className="flex flex-row flex-wrap gap-1">
                                   <button
                                     onClick={() => fetchOrderReceipt(orderId)}
-                                    className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white text-xs sm:text-sm rounded hover:from-[#cc0000] hover:to-[#aa0000] transition-colors whitespace-nowrap"
+                                    className="px-2 py-1 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white text-[10px] font-medium rounded hover:from-[#cc0000] hover:to-[#aa0000] transition-colors whitespace-nowrap"
                                   >
-                                    View Receipt
+                                    Receipt
                                   </button>
                                   
                                   {userRole === 'admin' && (
@@ -1477,7 +1492,7 @@ const OrdersPage = () => {
                                         orderId: order._id, 
                                         orderNumber: order.orderId || order.orderNumber || order._id 
                                       })}
-                                      className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs sm:text-sm rounded hover:from-red-600 hover:to-red-700 transition-colors whitespace-nowrap"
+                                      className="px-2 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] font-medium rounded hover:from-red-600 hover:to-red-700 transition-colors whitespace-nowrap"
                                       title="Delete order permanently"
                                     >
                                       Delete
@@ -1489,7 +1504,7 @@ const OrdersPage = () => {
                                       <button
                                         onClick={() => processRefund(order)}
                                         disabled={refundLoading && activeRefundOrderId === order._id}
-                                        className={`px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm rounded transition-colors whitespace-nowrap flex items-center justify-center gap-1 min-w-[70px] ${
+                                        className={`px-2 py-1 text-[10px] font-medium rounded transition-colors whitespace-nowrap flex items-center justify-center gap-1 ${
                                           refundLoading && activeRefundOrderId === order._id
                                             ? 'bg-gradient-to-r from-green-400 to-green-500 text-white cursor-not-allowed'
                                             : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
@@ -1498,7 +1513,7 @@ const OrdersPage = () => {
                                       >
                                         {refundLoading && activeRefundOrderId === order._id ? (
                                           <>
-                                            <svg className="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin h-2.5 w-2.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -1510,7 +1525,7 @@ const OrdersPage = () => {
                                       </button>
                                       
                                       {currentRefundStatus && (
-                                        <div className={`absolute top-full left-0 mt-1 px-2 py-1 text-xs rounded whitespace-nowrap z-10 ${
+                                        <div className={`absolute top-full left-0 mt-1 px-2 py-1 text-[10px] rounded whitespace-nowrap z-10 ${
                                           currentRefundStatus.status === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
                                           currentRefundStatus.status === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
                                           'bg-blue-100 text-blue-800 border border-blue-200'
@@ -1522,18 +1537,18 @@ const OrdersPage = () => {
                                   ) : (
                                     <>
                                       {order.refundStatus === 'completed' && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-green-100 text-green-800 text-xs sm:text-sm rounded border border-green-200 whitespace-nowrap text-center">
+                                        <span className="px-2 py-1 bg-green-100 text-green-800 text-[10px] font-medium rounded border border-green-200 whitespace-nowrap text-center">
                                           ✅ Refunded
                                         </span>
                                       )}
                                       {order.orderStatus === 'cancelled' && order.paymentStatus === 'completed' && order.refundStatus !== 'completed' && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm rounded border border-gray-200 whitespace-nowrap text-center">
+                                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-medium rounded border border-gray-200 whitespace-nowrap text-center">
                                           Manual Refund
                                         </span>
                                       )}
                                       
                                       {order.orderStatus !== 'cancelled' && order.refundStatus !== 'completed' && (
-                                        <span className="px-2 py-1 sm:px-3 sm:py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm rounded border border-blue-200 whitespace-nowrap text-center">
+                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-medium rounded border border-blue-200 whitespace-nowrap text-center">
                                           {order.orderStatus?.charAt(0).toUpperCase() + order.orderStatus?.slice(1)}
                                         </span>
                                       )}

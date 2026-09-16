@@ -587,14 +587,14 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
 
   const renderCategorySelector = () => (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center">
-        <Tag size={14} className="mr-1 text-gray-500" />
+      <label className="block text-[11px] sm:text-xs font-medium text-gray-600 mb-1 flex items-center">
+        <Tag size={13} className="mr-1 text-gray-500 sm:w-[14px] sm:h-[14px]" />
         Category <span className="text-red-500 ml-1">*</span>
       </label>
       {categoriesLoading ? (
         <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ff0000]"></div>
-          <span className="text-sm text-gray-600">Loading categories...</span>
+          <span className="text-xs sm:text-sm text-gray-600">Loading categories...</span>
         </div>
       ) : (
         <select
@@ -603,7 +603,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
           value={formData.category}
           onChange={handleInputChange}
           required
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm bg-white"
+          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-xs sm:text-sm bg-white"
         >
           <option value="">-- Select a category --</option>
           {Array.isArray(categories) && categories.length > 0 ? (
@@ -621,25 +621,25 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   );
 
   const renderVariantProduct = () => (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Basic Information */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <div className="border border-gray-200 rounded-lg sm:rounded-xl overflow-hidden bg-white">
         <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
+          className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
           onClick={() => toggleSection('basic')}
         >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Info size={16} className="mr-2 text-gray-500" />
+          <h3 className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
+            <Info size={14} className="mr-1.5 sm:mr-2 sm:w-[16px] sm:h-[16px] text-gray-500" />
             Basic Information
           </h3>
-          {expandedSections.basic ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+          {expandedSections.basic ? <ChevronUp size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" /> : <ChevronDown size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" />}
         </div>
         
         {expandedSections.basic && (
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-[11px] sm:text-xs font-medium text-gray-600 mb-1">
                   Product Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -649,13 +649,13 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
+                  className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-xs sm:text-sm"
                   placeholder="Enter product name"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-[11px] sm:text-xs font-medium text-gray-600 mb-1">
                   Seller <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -665,13 +665,13 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                   value={formData.seller}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
+                  className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-xs sm:text-sm"
                   placeholder="Enter seller name"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-[11px] sm:text-xs font-medium text-gray-600 mb-1">
                   Slug <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-2">
@@ -681,9 +681,9 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       id="auto-slug"
                       checked={autoGenerateSlug}
                       onChange={handleSlugToggle}
-                      className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000] w-4 h-4"
+                      className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000] w-3.5 h-3.5 sm:w-4 sm:h-4"
                     />
-                    <label htmlFor="auto-slug" className="text-xs text-gray-600">Auto-generate from name</label>
+                    <label htmlFor="auto-slug" className="text-[11px] sm:text-xs text-gray-600">Auto-generate from name</label>
                   </div>
                   <input
                     id="product-slug"
@@ -693,7 +693,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                     onChange={handleInputChange}
                     required
                     disabled={autoGenerateSlug}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] disabled:bg-gray-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] disabled:bg-gray-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                     placeholder="product-slug"
                   />
                 </div>
@@ -704,29 +704,29 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       </div>
 
       {/* Category */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <div className="border border-gray-200 rounded-lg sm:rounded-xl overflow-hidden bg-white">
         <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
+          className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
           onClick={() => toggleSection('category')}
         >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Tag size={16} className="mr-2 text-gray-500" />
+          <h3 className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
+            <Tag size={14} className="mr-1.5 sm:mr-2 sm:w-[16px] sm:h-[16px] text-gray-500" />
             Category
           </h3>
-          {expandedSections.category ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+          {expandedSections.category ? <ChevronUp size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" /> : <ChevronDown size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" />}
         </div>
         
         {expandedSections.category && (
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             {renderCategorySelector()}
             
             {variants.some(v => v.isDefault) && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-xs text-gray-600 font-medium">Base Selling Price</p>
-                <p className="text-xl font-bold text-gray-800">
+              <div className="mt-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-[11px] sm:text-xs text-gray-600 font-medium">Base Selling Price</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-800">
                   ₹{variants.find(v => v.isDefault)?.price || '0.00'}
                 </p>
-                <p className="text-xs text-gray-500">From default variant</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">From default variant</p>
               </div>
             )}
           </div>
@@ -734,66 +734,66 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       </div>
 
       {/* Variants Section */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <div className="border border-gray-200 rounded-lg sm:rounded-xl overflow-hidden bg-white">
         <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
+          className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
           onClick={() => toggleSection('variants')}
         >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Layers size={16} className="mr-2 text-gray-500" />
+          <h3 className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
+            <Layers size={14} className="mr-1.5 sm:mr-2 sm:w-[16px] sm:h-[16px] text-gray-500" />
             Product Variants <span className="text-red-500 ml-1">*</span>
           </h3>
           <div className="flex items-center">
             {variants.length > 0 && (
-              <span className="mr-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+              <span className="mr-2 text-[10px] sm:text-xs bg-gray-200 text-gray-700 px-1.5 sm:px-2 py-0.5 rounded-full">
                 {variants.length}
               </span>
             )}
-            {expandedSections.variants ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+            {expandedSections.variants ? <ChevronUp size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" /> : <ChevronDown size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" />}
           </div>
         </div>
         
         {expandedSections.variants && (
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] sm:text-xs text-gray-500">
                 Add different packs or options as variants.
               </p>
               <button
                 id="add-variant-button"
                 type="button"
                 onClick={addVariant}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
+                className="inline-flex items-center px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors whitespace-nowrap"
               >
-                <Plus size={14} className="mr-1" />
+                <Plus size={12} className="mr-1 sm:w-[14px] sm:h-[14px]" />
                 Add Variant
               </button>
             </div>
             
             {variants.length === 0 ? (
-              <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                <Layers size={32} className="mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-600 mb-3">
+              <div className="p-4 sm:p-6 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                <Layers size={26} className="mx-auto text-gray-400 mb-2 sm:w-[32px] sm:h-[32px]" />
+                <p className="text-xs sm:text-sm text-gray-600 mb-3">
                   No variants added yet. Add different packs or options.
                 </p>
                 <button
                   type="button"
                   onClick={addVariant}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
+                  className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
                 >
-                  <Plus size={16} className="mr-1" />
+                  <Plus size={14} className="mr-1 sm:w-[16px] sm:h-[16px]" />
                   Add Your First Variant
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
                 {variants.map((variant, index) => (
-                  <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-3">
+                  <div key={index} className="p-3 sm:p-4 bg-white rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-medium text-gray-500">Variant #{index + 1}</span>
+                        <span className="text-[11px] sm:text-xs font-medium text-gray-500">Variant #{index + 1}</span>
                         {variant.isDefault && (
-                          <span className="px-2 py-0.5 text-xs font-medium text-white bg-[#ff0000] rounded-full">
+                          <span className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-white bg-[#ff0000] rounded-full">
                             Default
                           </span>
                         )}
@@ -803,26 +803,26 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                         onClick={() => removeVariant(index)}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} className="sm:w-[16px] sm:h-[16px]" />
                       </button>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Variant Name *</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Variant Name *</label>
                         <input
                           id={`variant-name-${index}`}
                           type="text"
                           value={variant.variantName}
                           onChange={(e) => handleVariantChange(index, 'variantName', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="e.g. Pack 1, 500g, etc."
                           required
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Price (₹) *</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Price (₹) *</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span className="text-gray-400 text-xs">₹</span>
@@ -832,7 +832,7 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                             type="text"
                             value={variant.price}
                             onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
-                            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                             placeholder="0.00"
                             min="0"
                             step="0.01"
@@ -842,13 +842,13 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Stock *</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Stock *</label>
                         <input
                           id={`variant-stock-${index}`}
                           type="text"
                           value={variant.stock}
                           onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="0"
                           min="0"
                           required
@@ -856,12 +856,12 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Weight (Optional)</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Weight (Optional)</label>
                         <input
                           type="text"
                           value={variant.weight}
                           onChange={(e) => handleVariantChange(index, 'weight', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="e.g., 500"
                           min="0"
                           step="0.01"
@@ -869,11 +869,11 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Weight Unit</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Weight Unit</label>
                         <select
                           value={variant.weightUnit || 'gram'}
                           onChange={(e) => handleVariantChange(index, 'weightUnit', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         >
                           <option value="gram">Gram (g)</option>
                           <option value="kg">Kilogram (kg)</option>
@@ -884,33 +884,33 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">SKU (Optional)</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">SKU (Optional)</label>
                         <input
                           type="text"
                           value={variant.sku}
                           onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="Variant SKU"
                         />
                       </div>
                       
-                      <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex items-center space-x-2 mt-1.5 sm:mt-2">
                         <input
                           type="checkbox"
                           checked={variant.isDefault}
                           onChange={(e) => handleVariantChange(index, 'isDefault', e.target.checked)}
-                          className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000]"
+                          className="rounded border-gray-300 text-[#ff0000] focus:ring-[#ff0000] w-3.5 h-3.5 sm:w-4 sm:h-4"
                         />
-                        <span className="text-xs text-gray-600">Set as default variant</span>
+                        <span className="text-[11px] sm:text-xs text-gray-600">Set as default variant</span>
                       </div>
                       
                       <div className="md:col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Variant Images *</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Variant Images *</label>
                         
                         {/* Existing Images */}
                         {variant.images && variant.images.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-xs text-gray-500 mb-2">Existing Images:</p>
+                          <div className="mb-2.5 sm:mb-3">
+                            <p className="text-[11px] sm:text-xs text-gray-500 mb-2">Existing Images:</p>
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                               {variant.images.map((img, imgIdx) => {
                                 const filename = img.image.replace('/uploads/', '');
@@ -940,25 +940,25 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                         )}
                         
                         {/* New Images Upload */}
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-[#ff0000] transition-colors">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-2.5 sm:p-3 hover:border-[#ff0000] transition-colors">
                           <input
                             id={`variant-images-${index}`}
                             type="file"
                             multiple
                             onChange={(e) => handleVariantImageChange(e, index)}
                             accept="image/*"
-                            className="w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-[#ff0000] file:text-white hover:file:bg-[#cc0000]"
+                            className="w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-1.5 file:px-2.5 sm:file:px-3 file:rounded-full file:border-0 file:text-[10px] sm:file:text-xs file:font-medium file:bg-[#ff0000] file:text-white hover:file:bg-[#cc0000]"
                           />
                         </div>
                         
                         {variant.images?.length === 0 && (!variantImagePreviews[index] || variantImagePreviews[index].length === 0) && (
-                          <p className="text-xs text-amber-600 mt-1">⚠️ At least one image required</p>
+                          <p className="text-[11px] sm:text-xs text-amber-600 mt-1">⚠️ At least one image required</p>
                         )}
                         
                         {/* New Images Preview */}
                         {variantImagePreviews[index]?.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs text-gray-500 mb-2">New Images to Upload:</p>
+                          <div className="mt-2.5 sm:mt-3">
+                            <p className="text-[11px] sm:text-xs text-gray-500 mb-2">New Images to Upload:</p>
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                               {variantImagePreviews[index].map((preview, imgIdx) => (
                                 <div key={imgIdx} className="relative group">
@@ -985,12 +985,12 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                       </div>
                       
                       <div className="md:col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Variant Description *</label>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Variant Description *</label>
                         <textarea
                           id={`variant-description-${index}`}
                           value={variant.description}
                           onChange={(e) => handleVariantChange(index, 'description', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="Describe this variant"
                           rows="2"
                           required
@@ -1006,55 +1006,55 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       </div>
 
       {/* Specifications */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <div className="border border-gray-200 rounded-lg sm:rounded-xl overflow-hidden bg-white">
         <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
+          className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
           onClick={() => toggleSection('specifications')}
         >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Settings size={16} className="mr-2 text-gray-500" />
+          <h3 className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
+            <Settings size={14} className="mr-1.5 sm:mr-2 sm:w-[16px] sm:h-[16px] text-gray-500" />
             Specifications (Optional)
           </h3>
           <div className="flex items-center">
             {specifications.length > 0 && (
-              <span className="mr-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+              <span className="mr-2 text-[10px] sm:text-xs bg-gray-200 text-gray-700 px-1.5 sm:px-2 py-0.5 rounded-full">
                 {specifications.length}
               </span>
             )}
-            {expandedSections.specifications ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+            {expandedSections.specifications ? <ChevronUp size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" /> : <ChevronDown size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" />}
           </div>
         </div>
         
         {expandedSections.specifications && (
-          <div className="p-4 space-y-3">
+          <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
             {specifications.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 {specifications.map((spec, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div key={index} className="p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-xs font-medium text-gray-600">Specification #{index + 1}</h4>
+                      <h4 className="text-[11px] sm:text-xs font-medium text-gray-600">Specification #{index + 1}</h4>
                       <button
                         type="button"
                         onClick={() => removeSpecification(index)}
                         className="text-gray-400 hover:text-red-500"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={12} className="sm:w-[14px] sm:h-[14px]" />
                       </button>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                       <input
                         type="text"
                         value={spec.key}
                         onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         placeholder="Key"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                         placeholder="Value"
                       />
                     </div>
@@ -1062,17 +1062,17 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                 ))}
               </div>
             ) : (
-              <div className="p-4 bg-gray-50 rounded-lg text-center border border-gray-200">
-                <p className="text-xs text-gray-500">No specifications added yet.</p>
+              <div className="p-3 sm:p-4 bg-gray-50 rounded-lg text-center border border-gray-200">
+                <p className="text-[11px] sm:text-xs text-gray-500">No specifications added yet.</p>
               </div>
             )}
             
             <button
               type="button"
               onClick={addSpecification}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
+              className="inline-flex items-center px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] transition-colors"
             >
-              <Plus size={14} className="mr-1" />
+              <Plus size={12} className="mr-1 sm:w-[14px] sm:h-[14px]" />
               Add Specification
             </button>
           </div>
@@ -1080,27 +1080,27 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       </div>
 
       {/* Key Features */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <div className="border border-gray-200 rounded-lg sm:rounded-xl overflow-hidden bg-white">
         <div 
-          className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
+          className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 cursor-pointer border-b border-gray-200"
           onClick={() => toggleSection('features')}
         >
-          <h3 className="text-sm font-medium text-gray-700 flex items-center">
-            <Package size={16} className="mr-2 text-gray-500" />
+          <h3 className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
+            <Package size={14} className="mr-1.5 sm:mr-2 sm:w-[16px] sm:h-[16px] text-gray-500" />
             Key Features (Optional)
           </h3>
           <div className="flex items-center">
             {keyFeatures.length > 0 && (
-              <span className="mr-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+              <span className="mr-2 text-[10px] sm:text-xs bg-gray-200 text-gray-700 px-1.5 sm:px-2 py-0.5 rounded-full">
                 {keyFeatures.length}
               </span>
             )}
-            {expandedSections.features ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+            {expandedSections.features ? <ChevronUp size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" /> : <ChevronDown size={14} className="sm:w-[16px] sm:h-[16px] text-gray-500" />}
           </div>
         </div>
         
         {expandedSections.features && (
-          <div className="p-4 space-y-3">
+          <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
             <div className="flex items-center space-x-2">
               <input
                 type="text"
@@ -1108,30 +1108,30 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                 onChange={(e) => setNewKeyFeature(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeyFeature())}
                 placeholder="Enter a key feature"
-                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-sm"
+                className="flex-1 px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-[#ff0000] text-xs sm:text-sm"
               />
               <button
                 type="button"
                 onClick={handleAddKeyFeature}
                 disabled={!newKeyFeature.trim()}
-                className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-[#ff0000] rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
               >
-                <Plus size={16} className="mr-1" />
+                <Plus size={14} className="mr-1 sm:w-[16px] sm:h-[16px]" />
                 Add
               </button>
             </div>
             
             {keyFeatures.length > 0 && (
-              <div className="space-y-2 mt-3">
+              <div className="space-y-2 mt-2.5 sm:mt-3">
                 {keyFeatures.map((feature, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="text-sm text-gray-700 flex-1">{feature}</span>
+                    <span className="text-xs sm:text-sm text-gray-700 flex-1">{feature}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveKeyFeature(index)}
                       className="ml-2 text-gray-400 hover:text-red-500"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={12} className="sm:w-[14px] sm:h-[14px]" />
                     </button>
                   </div>
                 ))}
@@ -1144,54 +1144,54 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] m-0 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] m-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-10">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b bg-white sticky top-0 z-10">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Package size={20} className="mr-2 text-[#ff0000]" />
+            <h2 className="text-base sm:text-xl font-semibold text-gray-900 flex items-center">
+              <Package size={18} className="mr-1.5 sm:mr-2 sm:w-[20px] sm:h-[20px] text-[#ff0000]" />
               Edit Product
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">Product with Variants</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">Product with Variants</p>
           </div>
           <button 
             onClick={handleClose} 
             className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X size={18} className="text-gray-500" />
+            <X size={16} className="sm:w-[18px] sm:h-[18px] text-gray-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1" ref={modalContentRef}>
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1" ref={modalContentRef}>
           {error && !error.includes('fieldId:') && (
-            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm">
+            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg shadow-sm">
               <div className="flex items-center">
-                <AlertCircle size={18} className="mr-2 text-red-500 flex-shrink-0" />
-                <span className="text-sm font-medium">{error}</span>
+                <AlertCircle size={16} className="mr-2 sm:w-[18px] sm:h-[18px] text-red-500 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium">{error}</span>
               </div>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {renderVariantProduct()}
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 mt-6 border-t">
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors order-2 sm:order-1"
+              className="px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || categoriesLoading}
-              className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-[#ff0000] border border-transparent rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-1 sm:order-2"
+              className="inline-flex items-center justify-center px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-[#ff0000] border border-transparent rounded-lg hover:bg-[#cc0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-1 sm:order-2"
             >
-              <Save size={16} className="mr-2" />
+              <Save size={14} className="mr-1.5 sm:mr-2 sm:w-[16px] sm:h-[16px]" />
               {loading ? 'Updating...' : 'Update Product'}
             </button>
           </div>
