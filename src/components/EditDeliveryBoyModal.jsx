@@ -8,29 +8,33 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
     email: '',
     phone: '',
     password: '',
-    wardIds: [],  // ✅ CHANGED: array instead of single wardId
+    wardIds: [],
+    areas: [],           // ✅ NEW
     vehicleType: 'bike',
     vehicleNumber: '',
     status: 'active'
   });
-  
+
+  const [areasInput, setAreasInput] = useState(''); // ✅ NEW
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPasswordField, setShowPasswordField] = useState(false);
 
-  // Reset form when modal opens with delivery boy data
   useEffect(() => {
     if (deliveryBoy && isOpen) {
+      const existingAreas = Array.isArray(deliveryBoy.areas) ? deliveryBoy.areas : [];
       setFormData({
         name: deliveryBoy.name || '',
         email: deliveryBoy.email || '',
         phone: deliveryBoy.phone || '',
         password: '',
-        wardIds: deliveryBoy.wardIds || [],  // ✅ Array of ward IDs
+        wardIds: deliveryBoy.wardIds || [],
+        areas: existingAreas,
         vehicleType: deliveryBoy.vehicleType || 'bike',
         vehicleNumber: deliveryBoy.vehicleNumber || '',
         status: deliveryBoy.status || 'active'
       });
+      setAreasInput(existingAreas.join(', '));
       setShowPasswordField(false);
       setError('');
     }
@@ -41,7 +45,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ✅ NEW: Handle multi-select for wards
   const handleWardToggle = (wardId) => {
     setFormData(prev => {
       if (prev.wardIds.includes(wardId)) {
@@ -52,59 +55,55 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
     });
   };
 
+  const handleAreasChange = (e) => {
+    const raw = e.target.value;
+    setAreasInput(raw);
+    const parsed = raw
+      .split(',')
+      .map(a => a.trim())
+      .filter(a => a.length > 0);
+    const unique = [...new Set(parsed)];
+    setFormData(prev => ({ ...prev, areas: unique }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
-    // Validation
-    if (!formData.name.trim()) {
-      setError('Name is required');
+
+    if (!formData.name.trim()) { setError('Name is required'); setLoading(false); return; }
+    if (!formData.email.trim()) { setError('Email is required'); setLoading(false); return; }
+    if (!formData.phone.trim()) { setError('Phone number is required'); setLoading(false); return; }
+
+    // ✅ Must have at least one ward OR one area
+    if (formData.wardIds.length === 0 && formData.areas.length === 0) {
+      setError('Please select at least one ward or enter at least one area');
       setLoading(false);
       return;
     }
-    
-    if (!formData.email.trim()) {
-      setError('Email is required');
-      setLoading(false);
-      return;
-    }
-    
-    if (!formData.phone.trim()) {
-      setError('Phone number is required');
-      setLoading(false);
-      return;
-    }
-    
-    if (formData.wardIds.length === 0) {
-      setError('Please select at least one ward');
-      setLoading(false);
-      return;
-    }
-    
-    // Password validation only if user wants to change it
+
     if (formData.password && formData.password.length < 6) {
       setError('Password must be at least 6 characters');
       setLoading(false);
       return;
     }
-    
+
     try {
       const updateData = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
-        wardIds: formData.wardIds,  // ✅ Send array of ward IDs
+        wardIds: formData.wardIds,
+        areas: formData.areas,        // ✅ NEW
         vehicleType: formData.vehicleType,
         vehicleNumber: formData.vehicleNumber.trim(),
         status: formData.status
       };
-      
-      // Only include password if user entered one
+
       if (formData.password) {
         updateData.password = formData.password;
       }
-      
+
       await onEditDeliveryBoy(deliveryBoy._id, updateData);
       onClose();
     } catch (error) {
@@ -122,26 +121,24 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-3 z-50"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-lg sm:rounded-xl w-full max-w-md shadow-xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex justify-between items-center px-4 sm:px-5 py-3 border-b sticky top-0 bg-white z-10">
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
             <Truck size={18} className="sm:w-[20px] sm:h-[20px] text-[#ff0000]" />
             Edit Delivery Boy
           </h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-gray-400 hover:text-[#ff0000] transition-colors p-1"
           >
             <X size={18} className="sm:w-[20px] sm:h-[20px]" />
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-3.5 sm:space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-xs sm:text-sm">
@@ -149,7 +146,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           )}
 
-          {/* Full Name */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Full Name <span className="text-red-500">*</span>
@@ -168,7 +164,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Email <span className="text-red-500">*</span>
@@ -187,7 +182,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           </div>
 
-          {/* Phone */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Phone Number <span className="text-red-500">*</span>
@@ -206,7 +200,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           </div>
 
-          {/* Password - Optional Change */}
           <div>
             <div className="flex justify-between items-center mb-1 gap-2">
               <label className="block text-xs sm:text-sm font-medium text-gray-700">
@@ -238,10 +231,9 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             )}
           </div>
 
-          {/* ✅ CHANGED: Multi-select Wards */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Assign Wards <span className="text-red-500">*</span>
+              Assign Wards <span className="text-gray-400 font-normal">(optional if areas given)</span>
             </label>
             <div className="border border-gray-300 rounded-lg p-2.5 sm:p-3 max-h-40 sm:max-h-48 overflow-y-auto">
               {wards.length === 0 ? (
@@ -269,7 +261,28 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </p>
           </div>
 
-          {/* Vehicle Type */}
+          {/* ✅ NEW: Free-text Areas */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              Areas <span className="text-gray-400 font-normal">(optional if wards given)</span>
+            </label>
+            <div className="relative">
+              <MapPin size={16} className="sm:w-[18px] sm:h-[18px] absolute left-3 top-2.5 text-gray-400" />
+              <input
+                type="text"
+                value={areasInput}
+                onChange={handleAreasChange}
+                className="w-full pl-9 sm:pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-xs sm:text-sm"
+                placeholder="e.g. Neyyoor, Kanyakumari, Marthandam (comma separated)"
+              />
+            </div>
+            <p className="text-[11px] sm:text-xs text-gray-500 mt-1">
+              {formData.areas.length > 0
+                ? `Parsed: ${formData.areas.join(', ')}`
+                : 'Type city / area names separated by commas'}
+            </p>
+          </div>
+
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Vehicle Type
@@ -289,7 +302,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           </div>
 
-          {/* Vehicle Number */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Vehicle Number (Optional)
@@ -307,7 +319,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           </div>
 
-          {/* Status */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Status
@@ -328,7 +339,6 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </div>
           </div>
 
-          {/* Buttons — Mobile: stacked full-width | Desktop: side-by-side */}
           <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-2 pt-3 sm:pt-4">
             <button
               type="button"

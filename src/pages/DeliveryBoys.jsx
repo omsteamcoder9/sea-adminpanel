@@ -30,12 +30,12 @@ const DeliveryBoys = () => {
       } else {
         setLoading(true);
       }
-      
+
       const response = await deliveryBoyAPI.getAllDeliveryBoys();
-      
+
       let boysArray = [];
       const data = response.data;
-      
+
       if (data.deliveryBoys && Array.isArray(data.deliveryBoys)) {
         boysArray = data.deliveryBoys;
       } else if (Array.isArray(data)) {
@@ -91,6 +91,9 @@ const DeliveryBoys = () => {
   }, [searchTerm, statusFilter, deliveryBoys]);
 
   const handleRefresh = () => {
+    // ✅ reset filters so refreshed list shows everything
+    setSearchTerm('');
+    setStatusFilter('all');
     fetchDeliveryBoys(true);
   };
 
@@ -102,6 +105,11 @@ const DeliveryBoys = () => {
       setDeliveryBoys(newDeliveryBoys);
       setFilteredDeliveryBoys(newDeliveryBoys);
       setIsModalOpen(false);
+
+      // ✅ Reset filters so the new active boy is immediately visible
+      setSearchTerm('');
+      setStatusFilter('all');
+
       setError('✅ Delivery boy added successfully!');
       setTimeout(() => setError(''), 3000);
     } catch (error) {
@@ -114,7 +122,7 @@ const DeliveryBoys = () => {
     try {
       const response = await deliveryBoyAPI.updateDeliveryBoy(deliveryBoyId, deliveryBoyData);
       const updatedDeliveryBoy = response.data.deliveryBoy;
-      const updatedDeliveryBoys = deliveryBoys.map(boy => 
+      const updatedDeliveryBoys = deliveryBoys.map(boy =>
         boy._id === deliveryBoyId ? updatedDeliveryBoy : boy
       );
       setDeliveryBoys(updatedDeliveryBoys);
@@ -131,7 +139,7 @@ const DeliveryBoys = () => {
 
   const handleDeleteDeliveryBoy = async (id) => {
     if (!window.confirm('Are you sure you want to delete this delivery boy?')) return;
-    
+
     try {
       await deliveryBoyAPI.deleteDeliveryBoy(id);
       const remainingBoys = deliveryBoys.filter(boy => boy._id !== id);
@@ -232,7 +240,7 @@ const DeliveryBoys = () => {
                   {refreshing ? 'Refreshing...' : 'Refresh'}
                 </span>
               </button>
-              
+
               {isAdmin && (
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -248,15 +256,14 @@ const DeliveryBoys = () => {
 
           {error && (
             <div className={`px-4 py-3 rounded mb-4 text-sm ${
-              error.includes('✅') 
-                ? 'bg-green-50 border border-green-200 text-green-700' 
+              error.includes('✅')
+                ? 'bg-green-50 border border-green-200 text-green-700'
                 : 'bg-red-50 border border-red-200 text-red-700'
             }`}>
               {error}
             </div>
           )}
 
-          {/* ✅ Optimized Search Bar - No Scroll */}
           <div className="bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -269,7 +276,7 @@ const DeliveryBoys = () => {
                   className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-sm"
                 />
               </div>
-              
+
               <div className="sm:w-48">
                 <select
                   value={statusFilter}
@@ -284,7 +291,6 @@ const DeliveryBoys = () => {
             </div>
           </div>
 
-          {/* ✅ Table with horizontal scroll only on table, NOT on page */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {loading ? (
               <div className="text-center py-8">
@@ -303,15 +309,15 @@ const DeliveryBoys = () => {
               </div>
             ) : (
               <>
-                {/* ✅ Table container with overflow-x-auto - ONLY table scrolls, not page */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-[1000px] md:min-w-full">
+                  <table className="min-w-[1100px] md:min-w-full">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name & Contact</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ward Numbers</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ward Names</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Areas</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliveries</th>
@@ -348,6 +354,19 @@ const DeliveryBoys = () => {
                                     <span className="text-xs">{name}</span>
                                   </div>
                                 ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {(boy.areas || []).length > 0 ? (
+                                  boy.areas.map((area, idx) => (
+                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                      {area}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-400">—</span>
+                                )}
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -411,8 +430,15 @@ const DeliveryBoys = () => {
                             <div className="flex items-center text-xs text-gray-600">
                               <FaHashtag className="text-gray-400 mr-1" size={10} />
                               <span className="font-semibold">Wards:</span>
-                              <span className="ml-1">{wardDisplay.numbers.join(', ')}</span>
+                              <span className="ml-1">{wardDisplay.numbers.join(', ') || '—'}</span>
                             </div>
+                          </div>
+                          <div className="mt-1 flex items-center text-xs text-gray-600">
+                            <FaMapMarkerAlt className="text-gray-400 mr-1" size={10} />
+                            <span className="font-semibold">Areas:</span>
+                            <span className="ml-1">
+                              {(boy.areas || []).length > 0 ? boy.areas.join(', ') : '—'}
+                            </span>
                           </div>
                           <div className="text-sm text-gray-600 capitalize mt-1">
                             Vehicle: {boy.vehicleType}
@@ -452,14 +478,14 @@ const DeliveryBoys = () => {
           </div>
         </main>
 
-        <AddDeliveryBoyModal 
+        <AddDeliveryBoyModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onAddDeliveryBoy={handleAddDeliveryBoy}
           wards={wards}
         />
 
-        <EditDeliveryBoyModal 
+        <EditDeliveryBoyModal
           isOpen={isEditModalOpen}
           onClose={closeEditModal}
           onEditDeliveryBoy={handleEditDeliveryBoy}

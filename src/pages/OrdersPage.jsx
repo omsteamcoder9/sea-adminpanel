@@ -653,6 +653,26 @@ const OrdersPage = () => {
     return id.length > 12 ? id.slice(-8) : id;
   };
 
+  // ✅ Helper: build clean combined address (no duplicate typedArea)
+  const getFullAddress = (receiptData) => {
+    const addr = receiptData?.shippingAddress;
+    if (!addr) return '—';
+
+    const parts = [];
+    const typed = (receiptData?.typedArea || receiptData?.wardName || '').trim();
+    const street = (addr.street || '').trim();
+
+    if (typed && !street.toLowerCase().includes(typed.toLowerCase())) {
+      parts.push(typed);
+    }
+    if (street) parts.push(street);
+    if (addr.city) parts.push(addr.city);
+    if (addr.state) parts.push(addr.state);
+    if (addr.postalCode) parts.push(addr.postalCode);
+
+    return parts.length > 0 ? parts.join(', ') : '—';
+  };
+
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.orderStatus === 'pending').length;
   const deliveredOrders = orders.filter(order => order.orderStatus === 'delivered' || order.orderStatus === 'completed').length;
@@ -663,7 +683,6 @@ const OrdersPage = () => {
 
     const receiptData = order.receipt || order;
     const orderId = receiptData.receiptNumber || receiptData.orderNumber || receiptData.orderId || receiptData._id;
-    const customerName = receiptData.customer?.name || receiptData.user?.name || receiptData.guestUser?.name || receiptData.shippingAddress?.fullName || 'N/A';
     const customerEmail = receiptData.customer?.email || receiptData.user?.email || receiptData.guestUser?.email || receiptData.email || 'N/A';
     const customerPhone = receiptData.customer?.phone || receiptData.user?.phone || receiptData.guestUser?.phone || receiptData.shippingAddress?.phone || 'N/A';
     const items = receiptData.products || receiptData.items || [];
@@ -728,25 +747,63 @@ const OrdersPage = () => {
               </div>
             </div>
 
+            {/* ✅ Customer contact block — no name */}
             <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-gray-50 rounded border">
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-bold text-sm sm:text-base truncate">{customerName}</h3>
-              </div>
               <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-500">📧</span>
-                  <span className="truncate">{customerEmail}</span>
-                </div>
+       
                 <div className="flex items-center gap-1">
                   <span className="text-gray-500">📞</span>
                   <span>{customerPhone}</span>
                 </div>
               </div>
+
+              {/* ✅ Per-field shipping block */}
               {shippingAddress && (
-                <div className="mt-2 pt-2 border-t text-xs sm:text-sm">
-                  <div className="font-medium text-gray-600">Shipping:</div>
-                  <div className="text-gray-500 truncate">
-                    {shippingAddress.street}, {shippingAddress.city}
+                <div className="mt-2 pt-2 border-t text-xs sm:text-sm space-y-1">
+                  <div className="font-medium text-gray-600 mb-1">Shipping Address:</div>
+
+                  {/* Area — prefer typedArea, else wardName */}
+                  {((receiptData.typedArea) || (receiptData.wardName)) && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-16">Area:</span>
+                      <span className="text-gray-700 break-words">
+                        {receiptData.typedArea || receiptData.wardName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Street */}
+                  {shippingAddress.street && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-16">Street:</span>
+                      <span className="text-gray-700 break-words">{shippingAddress.street}</span>
+                    </div>
+                  )}
+
+                  {/* City */}
+                  {shippingAddress.city && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-16">City:</span>
+                      <span className="text-gray-700 break-words">{shippingAddress.city}</span>
+                    </div>
+                  )}
+
+                  {/* State + Postal */}
+                  {(shippingAddress.state || shippingAddress.postalCode) && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-16">State:</span>
+                      <span className="text-gray-700 break-words">
+                        {[shippingAddress.state, shippingAddress.postalCode].filter(Boolean).join(' - ')}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Combined address line */}
+                  <div className="flex items-start gap-2 pt-1 border-t border-gray-100">
+                    <span className="text-gray-500 flex-shrink-0 w-16">Address:</span>
+                    <span className="text-gray-700 font-medium break-words">
+                      {getFullAddress(receiptData)}
+                    </span>
                   </div>
                 </div>
               )}

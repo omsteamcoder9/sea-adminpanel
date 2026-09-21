@@ -108,6 +108,22 @@ const DeliveryBoyStats = () => {
     return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>;
   };
 
+  // ✅ NEW: Show ward if present, else show city + street (for non-Karaikudi orders)
+  const getLocationDisplay = (order) => {
+    if (order.wardId) {
+      return order.wardName ? `Ward ${order.wardId} - ${order.wardName}` : `Ward ${order.wardId}`;
+    }
+    if (order.shippingAddress) {
+      const parts = [
+        order.shippingAddress.street,
+        order.shippingAddress.city,
+        order.shippingAddress.postalCode
+      ].filter(Boolean);
+      return parts.join(', ') || '—';
+    }
+    return '—';
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -161,11 +177,29 @@ const DeliveryBoyStats = () => {
                     <FaCalendarAlt size={12} /> Joined: {formatDate(deliveryBoy?.joinedAt)}
                   </span>
                 </div>
-                
-                <div className="mt-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-white/80 text-sm">Assigned Wards:</span>
-                    {deliveryBoy?.wardIds?.length > 0 ? (
+
+                {/* ✅ Areas (free-text) */}
+                {deliveryBoy?.areas?.length > 0 && (
+                  <div className="mt-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-white/80 text-sm">Assigned Areas:</span>
+                      <div className="flex flex-wrap gap-2">
+                        {deliveryBoy.areas.map((area, index) => (
+                          <span key={index} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
+                            <FaMapMarkerAlt size={10} />
+                            {area}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Wards (Karaikudi only) */}
+                {deliveryBoy?.wardIds?.length > 0 && (
+                  <div className="mt-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-white/80 text-sm">Assigned Wards:</span>
                       <div className="flex flex-wrap gap-2">
                         {deliveryBoy.wardIds.map((wardId, index) => (
                           <span key={index} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
@@ -174,23 +208,25 @@ const DeliveryBoyStats = () => {
                           </span>
                         ))}
                       </div>
-                    ) : (
-                      <span className="text-white/60 text-sm">No wards assigned</span>
+                    </div>
+                    {deliveryBoy?.wardNames?.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex flex-wrap gap-2">
+                          {deliveryBoy.wardNames.map((wardName, index) => (
+                            <span key={index} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
+                              <FaMapMarkerAlt size={10} />
+                              {wardName}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                  {deliveryBoy?.wardNames?.length > 0 && (
-                    <div className="mt-2">
-                      <div className="flex flex-wrap gap-2">
-                        {deliveryBoy.wardNames.map((wardName, index) => (
-                          <span key={index} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
-                            <FaMapMarkerAlt size={10} />
-                            {wardName}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
+
+                {!deliveryBoy?.areas?.length && !deliveryBoy?.wardIds?.length && (
+                  <div className="mt-3 text-white/60 text-sm">No areas or wards assigned</div>
+                )}
                 
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
@@ -292,7 +328,7 @@ const DeliveryBoyStats = () => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Amount</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Status</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Payment</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Ward</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Location</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -304,7 +340,10 @@ const DeliveryBoyStats = () => {
                           <td className="px-4 py-3 text-sm font-semibold">{formatCurrency(order.finalAmount)}</td>
                           <td className="px-4 py-3">{getStatusBadge(order.deliveryStatus, order.orderStatus)}</td>
                           <td className="px-4 py-3 text-sm capitalize">{order.paymentMethod}</td>
-                          <td className="px-4 py-3 text-sm">Ward {order.wardId} - {order.wardName}</td>
+                          {/* ✅ Location: ward if present, else street/city */}
+                          <td className="px-4 py-3 text-sm max-w-xs truncate" title={getLocationDisplay(order)}>
+                            {getLocationDisplay(order)}
+                          </td>
                         </tr>
                       ))}
                       {allOrders.length === 0 && (

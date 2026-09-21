@@ -30,6 +30,8 @@ export const deliveryBoyAPI = {
   
   // Mark order as delivered
   markDelivered: (orderId) => api.put(`/delivery/orders/${orderId}/deliver`),
+    markCodPaid: (orderId) => api.put(`/delivery/orders/${orderId}/mark-paid`),
+
   
   // ============ ADMIN DELIVERY BOY MANAGEMENT ============
   
