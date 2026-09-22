@@ -1,5 +1,5 @@
 // src/components/AddDeliveryBoyModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, User, Phone, Mail, Lock, MapPin, Car, Truck, UserPlus } from 'lucide-react';
 
 const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) => {
@@ -8,15 +8,27 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
     email: '',
     phone: '',
     password: '',
+    city: '',            // ✅ NEW: which city the selected wards belong to
     wardIds: [],
     areas: [],
     vehicleType: 'bike',
     vehicleNumber: ''
   });
 
-  const [areaInput, setAreaInput] = useState(''); // current typing buffer
+  const [areaInput, setAreaInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // ✅ Group wards by city
+  const wardsByCity = useMemo(() => {
+    const grouped = {};
+    for (const ward of wards) {
+      const cityKey = (ward.city || 'karaikudi').toLowerCase();
+      if (!grouped[cityKey]) grouped[cityKey] = [];
+      grouped[cityKey].push(ward);
+    }
+    return grouped;
+  }, [wards]);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,6 +37,7 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
         email: '',
         phone: '',
         password: '',
+        city: '',
         wardIds: [],
         areas: [],
         vehicleType: 'bike',
@@ -40,21 +53,42 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleWardToggle = (wardId) => {
+  // ✅ Toggle ward, but also enforce single-city selection
+  const handleWardToggle = (wardId, wardCity) => {
     setFormData(prev => {
-      if (prev.wardIds.includes(wardId)) {
-        return { ...prev, wardIds: prev.wardIds.filter(id => id !== wardId) };
-      } else {
-        return { ...prev, wardIds: [...prev.wardIds, wardId] };
+      const cityKey = (wardCity || 'karaikudi').toLowerCase();
+      const isSelected = prev.wardIds.some(id => String(id) === String(wardId));
+
+      // ---- UNSELECT ----
+      if (isSelected) {
+        const nextWardIds = prev.wardIds.filter(id => String(id) !== String(wardId));
+        return {
+          ...prev,
+          wardIds: nextWardIds,
+          // if no wards left, clear the city too
+          city: nextWardIds.length === 0 ? '' : prev.city
+        };
       }
+
+      // ---- SELECT ----
+      // If a ward from a different city is already selected, block it
+      if (prev.city && prev.city !== cityKey) {
+        setError(`You can only assign wards from one city. Currently selected city: ${prev.city}. Clear wards first to switch city.`);
+        return prev;
+      }
+
+      setError('');
+      return {
+        ...prev,
+        city: cityKey,                       // ✅ lock to this city
+        wardIds: [...prev.wardIds, wardId]
+      };
     });
   };
 
-  // ✅ Add a single area to the list
   const addArea = (rawValue) => {
     const value = rawValue.trim();
     if (!value) return;
-    // prevent duplicates (case-insensitive)
     const exists = formData.areas.some(a => a.toLowerCase() === value.toLowerCase());
     if (exists) {
       setAreaInput('');
@@ -64,7 +98,6 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
     setAreaInput('');
   };
 
-  // ✅ Remove an area chip
   const removeArea = (indexToRemove) => {
     setFormData(prev => ({
       ...prev,
@@ -72,13 +105,11 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
     }));
   };
 
-  // ✅ Enter key → add; Backspace on empty → remove last
   const handleAreaKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       addArea(areaInput);
     } else if (e.key === 'Backspace' && areaInput === '' && formData.areas.length > 0) {
-      // remove last chip on backspace when input is empty
       removeArea(formData.areas.length - 1);
     }
   };
@@ -94,7 +125,6 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
     if (!formData.password.trim()) { setError('Password is required'); setLoading(false); return; }
     if (formData.password.length < 6) { setError('Password must be at least 6 characters'); setLoading(false); return; }
 
-    // ✅ Combine pending typed value + existing areas
     let finalAreas = [...formData.areas];
     if (areaInput.trim()) {
       const pending = areaInput.trim();
@@ -102,9 +132,15 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
       if (!exists) finalAreas.push(pending);
     }
 
-    // ✅ Must have at least one ward OR one area
     if (formData.wardIds.length === 0 && finalAreas.length === 0) {
       setError('Please select at least one ward or add at least one area');
+      setLoading(false);
+      return;
+    }
+
+    // ✅ Must have city if wards selected
+    if (formData.wardIds.length > 0 && !formData.city) {
+      setError('City is required when wards are selected');
       setLoading(false);
       return;
     }
@@ -115,7 +151,8 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         password: formData.password,
-        wardIds: formData.wardIds,
+        city: formData.city,             // ✅ SEND CITY
+        wardIds: formData.wardIds,       // ✅ interpreted under `city`
         areas: finalAreas,
         vehicleType: formData.vehicleType,
         vehicleNumber: formData.vehicleNumber.trim()
@@ -236,30 +273,60 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
             </div>
           </div>
 
-          {/* Multi-select Wards */}
+          {/* ✅ Ward checkboxes grouped by city */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Assign Wards <span className="text-gray-400 font-normal">(optional if areas given)</span>
             </label>
-            <div className="border border-gray-300 rounded-lg p-2.5 sm:p-3 max-h-40 sm:max-h-48 overflow-y-auto">
-              {wards.length === 0 ? (
+
+            {/* ✅ Show which city is currently locked in */}
+            {formData.city && (
+              <div className="mb-2 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+                <span className="text-xs sm:text-sm text-red-700">
+                  Selected city: <b className="uppercase">{formData.city}</b>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, city: '', wardIds: [] }))}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            <div className="border border-gray-300 rounded-lg p-2.5 sm:p-3 max-h-64 overflow-y-auto space-y-4">
+              {Object.keys(wardsByCity).length === 0 ? (
                 <p className="text-xs sm:text-sm text-gray-500 text-center">Loading wards...</p>
               ) : (
-                <div className="space-y-1.5 sm:space-y-2">
-                  {wards.map((ward) => (
-                    <label key={ward.wardId} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={formData.wardIds.includes(ward.wardId)}
-                        onChange={() => handleWardToggle(ward.wardId)}
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff0000] rounded focus:ring-[#ff0000] flex-shrink-0"
-                      />
-                      <span className="text-xs sm:text-sm text-gray-700">
-                        Ward {ward.wardId} - {ward.wardName}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                Object.entries(wardsByCity).map(([cityKey, cityWards]) => {
+                  const cityDisabled = !!formData.city && formData.city !== cityKey;
+                  return (
+                    <div key={cityKey} className={cityDisabled ? 'opacity-40 pointer-events-none' : ''}>
+                      <div className="text-[11px] sm:text-xs font-bold text-[#ff0000] uppercase tracking-wide mb-2 border-b border-gray-200 pb-1">
+                        {cityKey.charAt(0).toUpperCase() + cityKey.slice(1)} ({cityWards.length} wards)
+                      </div>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        {cityWards.map((ward) => (
+                          <label
+                            key={`${cityKey}-${ward.wardId}`}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.wardIds.some(id => String(id) === String(ward.wardId))}
+                              onChange={() => handleWardToggle(ward.wardId, cityKey)}
+                              className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff0000] rounded focus:ring-[#ff0000] flex-shrink-0"
+                            />
+                            <span className="text-xs sm:text-sm text-gray-700">
+                              Ward {ward.wardId} - {ward.wardName}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
             <p className="text-[11px] sm:text-xs text-gray-500 mt-1">
@@ -267,13 +334,12 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
             </p>
           </div>
 
-          {/* ✅ Tag/chip input for Areas */}
+          {/* Areas chip input */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Areas <span className="text-gray-400 font-normal">(optional if wards given)</span>
             </label>
 
-            {/* Chips list */}
             {formData.areas.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {formData.areas.map((area, idx) => (
@@ -296,7 +362,6 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
               </div>
             )}
 
-            {/* Input */}
             <div className="relative">
               <MapPin size={16} className="sm:w-[18px] sm:h-[18px] absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -315,9 +380,7 @@ const AddDeliveryBoyModal = ({ isOpen, onClose, onAddDeliveryBoy, wards = [] }) 
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Vehicle Type
-            </label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
             <div className="relative">
               <Car size={16} className="sm:w-[18px] sm:h-[18px] absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <select

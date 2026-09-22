@@ -1,5 +1,5 @@
 // src/components/EditDeliveryBoyModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, User, Phone, Mail, MapPin, Car, Truck, Lock } from 'lucide-react';
 
 const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy, wards = [] }) => {
@@ -8,17 +8,29 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
     email: '',
     phone: '',
     password: '',
+    city: '',            // ✅ NEW: which city the selected wards belong to
     wardIds: [],
-    areas: [],           // ✅ NEW
+    areas: [],
     vehicleType: 'bike',
     vehicleNumber: '',
     status: 'active'
   });
 
-  const [areasInput, setAreasInput] = useState(''); // ✅ NEW
+  const [areaInput, setAreaInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPasswordField, setShowPasswordField] = useState(false);
+
+  // ✅ Group wards by city
+  const wardsByCity = useMemo(() => {
+    const grouped = {};
+    for (const ward of wards) {
+      const cityKey = (ward.city || 'karaikudi').toLowerCase();
+      if (!grouped[cityKey]) grouped[cityKey] = [];
+      grouped[cityKey].push(ward);
+    }
+    return grouped;
+  }, [wards]);
 
   useEffect(() => {
     if (deliveryBoy && isOpen) {
@@ -28,13 +40,14 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
         email: deliveryBoy.email || '',
         phone: deliveryBoy.phone || '',
         password: '',
+        city: (deliveryBoy.city || '').toLowerCase(),   // ✅ prefill city
         wardIds: deliveryBoy.wardIds || [],
         areas: existingAreas,
         vehicleType: deliveryBoy.vehicleType || 'bike',
         vehicleNumber: deliveryBoy.vehicleNumber || '',
         status: deliveryBoy.status || 'active'
       });
-      setAreasInput(existingAreas.join(', '));
+      setAreaInput('');
       setShowPasswordField(false);
       setError('');
     }
@@ -45,25 +58,63 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleWardToggle = (wardId) => {
+  // ✅ Toggle ward, enforce single-city selection
+  const handleWardToggle = (wardId, wardCity) => {
     setFormData(prev => {
-      if (prev.wardIds.includes(wardId)) {
-        return { ...prev, wardIds: prev.wardIds.filter(id => id !== wardId) };
-      } else {
-        return { ...prev, wardIds: [...prev.wardIds, wardId] };
+      const cityKey = (wardCity || 'karaikudi').toLowerCase();
+      const isSelected = prev.wardIds.some(id => String(id) === String(wardId));
+
+      // ---- UNSELECT ----
+      if (isSelected) {
+        const nextWardIds = prev.wardIds.filter(id => String(id) !== String(wardId));
+        return {
+          ...prev,
+          wardIds: nextWardIds,
+          city: nextWardIds.length === 0 ? '' : prev.city
+        };
       }
+
+      // ---- SELECT ----
+      if (prev.city && prev.city !== cityKey) {
+        setError(`You can only assign wards from one city. Currently selected city: ${prev.city}. Clear wards first to switch city.`);
+        return prev;
+      }
+
+      setError('');
+      return {
+        ...prev,
+        city: cityKey,
+        wardIds: [...prev.wardIds, wardId]
+      };
     });
   };
 
-  const handleAreasChange = (e) => {
-    const raw = e.target.value;
-    setAreasInput(raw);
-    const parsed = raw
-      .split(',')
-      .map(a => a.trim())
-      .filter(a => a.length > 0);
-    const unique = [...new Set(parsed)];
-    setFormData(prev => ({ ...prev, areas: unique }));
+  const addArea = (rawValue) => {
+    const value = rawValue.trim();
+    if (!value) return;
+    const exists = formData.areas.some(a => a.toLowerCase() === value.toLowerCase());
+    if (exists) {
+      setAreaInput('');
+      return;
+    }
+    setFormData(prev => ({ ...prev, areas: [...prev.areas, value] }));
+    setAreaInput('');
+  };
+
+  const removeArea = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      areas: prev.areas.filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
+  const handleAreaKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addArea(areaInput);
+    } else if (e.key === 'Backspace' && areaInput === '' && formData.areas.length > 0) {
+      removeArea(formData.areas.length - 1);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -75,9 +126,21 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
     if (!formData.email.trim()) { setError('Email is required'); setLoading(false); return; }
     if (!formData.phone.trim()) { setError('Phone number is required'); setLoading(false); return; }
 
-    // ✅ Must have at least one ward OR one area
-    if (formData.wardIds.length === 0 && formData.areas.length === 0) {
+    let finalAreas = [...formData.areas];
+    if (areaInput.trim()) {
+      const pending = areaInput.trim();
+      const exists = finalAreas.some(a => a.toLowerCase() === pending.toLowerCase());
+      if (!exists) finalAreas.push(pending);
+    }
+
+    if (formData.wardIds.length === 0 && finalAreas.length === 0) {
       setError('Please select at least one ward or enter at least one area');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.wardIds.length > 0 && !formData.city) {
+      setError('City is required when wards are selected');
       setLoading(false);
       return;
     }
@@ -93,8 +156,9 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
+        city: formData.city,             // ✅ SEND CITY
         wardIds: formData.wardIds,
-        areas: formData.areas,        // ✅ NEW
+        areas: finalAreas,
         vehicleType: formData.vehicleType,
         vehicleNumber: formData.vehicleNumber.trim(),
         status: formData.status
@@ -231,29 +295,62 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             )}
           </div>
 
+          {/* ✅ Ward checkboxes grouped by city */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Assign Wards <span className="text-gray-400 font-normal">(optional if areas given)</span>
             </label>
-            <div className="border border-gray-300 rounded-lg p-2.5 sm:p-3 max-h-40 sm:max-h-48 overflow-y-auto">
-              {wards.length === 0 ? (
+
+            {/* ✅ Show which city is currently locked in */}
+            {formData.city && (
+              <div className="mb-2 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+                <span className="text-xs sm:text-sm text-red-700">
+                  Selected city: <b className="uppercase">{formData.city}</b>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, city: '', wardIds: [] }))}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            <div className="border border-gray-300 rounded-lg p-2.5 sm:p-3 max-h-64 overflow-y-auto space-y-4">
+              {Object.keys(wardsByCity).length === 0 ? (
                 <p className="text-xs sm:text-sm text-gray-500 text-center">Loading wards...</p>
               ) : (
-                <div className="space-y-1.5 sm:space-y-2">
-                  {wards.map((ward) => (
-                    <label key={ward.wardId} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={formData.wardIds.includes(ward.wardId)}
-                        onChange={() => handleWardToggle(ward.wardId)}
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff0000] rounded focus:ring-[#ff0000] flex-shrink-0"
-                      />
-                      <span className="text-xs sm:text-sm text-gray-700">
-                        Ward {ward.wardId} - {ward.wardName}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                Object.entries(wardsByCity).map(([cityKey, cityWards]) => {
+                  const cityDisabled = !!formData.city && formData.city !== cityKey;
+                  return (
+                    <div key={cityKey} className={cityDisabled ? 'opacity-40 pointer-events-none' : ''}>
+                      <div className="text-[11px] sm:text-xs font-bold text-[#ff0000] uppercase tracking-wide mb-2 border-b border-gray-200 pb-1">
+                        {cityKey.charAt(0).toUpperCase() + cityKey.slice(1)} ({cityWards.length} wards)
+                      </div>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        {cityWards.map((ward) => (
+                          <label
+                            key={`${cityKey}-${ward.wardId}`}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+checked={
+  formData.city === cityKey &&
+  formData.wardIds.some(id => String(id) === String(ward.wardId))
+}                              onChange={() => handleWardToggle(ward.wardId, cityKey)}
+                              className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff0000] rounded focus:ring-[#ff0000] flex-shrink-0"
+                            />
+                            <span className="text-xs sm:text-sm text-gray-700">
+                              Ward {ward.wardId} - {ward.wardName}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
             <p className="text-[11px] sm:text-xs text-gray-500 mt-1">
@@ -261,32 +358,53 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
             </p>
           </div>
 
-          {/* ✅ NEW: Free-text Areas */}
+          {/* Areas chip input */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Areas <span className="text-gray-400 font-normal">(optional if wards given)</span>
             </label>
+
+            {formData.areas.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {formData.areas.map((area, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                  >
+                    <MapPin size={10} />
+                    {area}
+                    <button
+                      type="button"
+                      onClick={() => removeArea(idx)}
+                      className="ml-0.5 hover:text-orange-900 transition-colors"
+                      aria-label={`Remove ${area}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="relative">
-              <MapPin size={16} className="sm:w-[18px] sm:h-[18px] absolute left-3 top-2.5 text-gray-400" />
+              <MapPin size={16} className="sm:w-[18px] sm:h-[18px] absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                value={areasInput}
-                onChange={handleAreasChange}
+                value={areaInput}
+                onChange={(e) => setAreaInput(e.target.value)}
+                onKeyDown={handleAreaKeyDown}
+                onBlur={() => areaInput.trim() && addArea(areaInput)}
                 className="w-full pl-9 sm:pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff0000] focus:border-transparent text-xs sm:text-sm"
-                placeholder="e.g. Neyyoor, Kanyakumari, Marthandam (comma separated)"
+                placeholder="Type an area and press Enter"
               />
             </div>
             <p className="text-[11px] sm:text-xs text-gray-500 mt-1">
-              {formData.areas.length > 0
-                ? `Parsed: ${formData.areas.join(', ')}`
-                : 'Type city / area names separated by commas'}
+              Press <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px]">Enter</kbd> or <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px]">,</kbd> to add • Click × to remove
             </p>
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Vehicle Type
-            </label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
             <div className="relative">
               <Car size={16} className="sm:w-[18px] sm:h-[18px] absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <select
@@ -320,9 +438,7 @@ const EditDeliveryBoyModal = ({ isOpen, onClose, onEditDeliveryBoy, deliveryBoy,
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2">
                 <div className={`w-2 h-2 rounded-full ${formData.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
