@@ -361,7 +361,7 @@ checked={
           {/* Areas chip input */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Areas <span className="text-gray-400 font-normal">(optional if wards given)</span>
+              Cities <span className="text-gray-400 font-normal">(optional if wards given)</span>
             </label>
 
             {formData.areas.length > 0 && (
