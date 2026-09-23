@@ -1,18 +1,17 @@
 // src/pages/OrdersPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ordersAPI } from '../api/orders';
 import { deliveryBoyAPI } from '../api/deliveryBoy';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut, Search } from 'lucide-react';
-import { FaSyncAlt, FaTag, FaTruck, FaMapMarkerAlt, FaEdit, FaPhone, FaUser, FaBox } from 'react-icons/fa';
+import { FaSyncAlt, FaTag, FaTruck, FaMapMarkerAlt, FaPhone, FaUser, FaBox, FaCheck, FaSquare } from 'react-icons/fa';
 
 const OrdersPage = () => {
   const { logout, user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [deliveryBoys, setDeliveryBoys] = useState([]);
-  const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -29,18 +28,19 @@ const OrdersPage = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ show: false, orderId: null, orderNumber: null });
 
-  // ✅ Today's Orders PDF state
   const [downloadingToday, setDownloadingToday] = useState(false);
 
-  // Edit Address modal state
-  const [editAddressOrder, setEditAddressOrder] = useState(null);
-  const [editAddressForm, setEditAddressForm] = useState({
-    name: '', phone: '', city: '', wardId: '', typedArea: '',
-    street: '', postalCode: '', state: '', country: '', email: ''
-  });
-  const [editAddressLoading, setEditAddressLoading] = useState(false);
+  const [assignModalOrder, setAssignModalOrder] = useState(null);
+  const [assignSearchTerm, setAssignSearchTerm] = useState('');
 
-  // Filtering States
+  const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
+  const [bulkAssignModalOpen, setBulkAssignModalOpen] = useState(false);
+  const [bulkAssignSearchTerm, setBulkAssignSearchTerm] = useState('');
+  const [bulkAssigning, setBulkAssigning] = useState(false);
+
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+
   const [sortOption, setSortOption] = useState('newest');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -69,7 +69,6 @@ const OrdersPage = () => {
   useEffect(() => {
     fetchOrders();
     fetchDeliveryBoys();
-    fetchWards();
   }, []);
 
   const fetchDeliveryBoys = async () => {
@@ -78,19 +77,9 @@ const OrdersPage = () => {
       let list = [];
       if (response.data?.deliveryBoys && Array.isArray(response.data.deliveryBoys)) list = response.data.deliveryBoys;
       else if (Array.isArray(response.data)) list = response.data;
-      setDeliveryBoys(list.filter(b => b.status === 'active'));
+      setDeliveryBoys(list.filter(b => b.status === 'active' && (b._id || b.id)));
     } catch (err) {
       console.error('Error fetching delivery boys:', err);
-    }
-  };
-
-  const fetchWards = async () => {
-    try {
-      const response = await deliveryBoyAPI.getWardsList();
-      const list = response.data?.wards || [];
-      setWards(list);
-    } catch (err) {
-      console.error('Error fetching wards:', err);
     }
   };
 
@@ -101,14 +90,20 @@ const OrdersPage = () => {
     if (selectedStatus !== 'all') result = result.filter(o => o.orderStatus === selectedStatus);
 
     if (searchTerm.trim() !== '') {
-      const term = searchTerm.toLowerCase();
+      const term = searchTerm.trim().toLowerCase();
       result = result.filter(order => {
         const customer = getCustomerInfo(order);
+        const cityText = (order.shippingAddress?.city || '').toLowerCase();
+        const areaText = (order.typedArea || '').toLowerCase();
+        const wardText = (order.wardName || '').toLowerCase();
         return (
           (order.orderId && order.orderId.toLowerCase().includes(term)) ||
           (customer.name && customer.name.toLowerCase().includes(term)) ||
           (customer.email && customer.email.toLowerCase().includes(term)) ||
-          (customer.phone && customer.phone.toLowerCase().includes(term))
+          (customer.phone && customer.phone.toLowerCase().includes(term)) ||
+          cityText.includes(term) ||
+          areaText.includes(term) ||
+          wardText.includes(term)
         );
       });
     }
@@ -152,10 +147,13 @@ const OrdersPage = () => {
   const handleRefresh = () => {
     fetchOrders(true);
     fetchDeliveryBoys();
-    fetchWards();
+    setSelectedOrderIds(prev => {
+      const next = new Set();
+      orders.forEach(o => { if (prev.has(o._id)) next.add(o._id); });
+      return next;
+    });
   };
 
-  // ✅ Download today's orders PDF
   const handleDownloadTodayOrders = async () => {
     try {
       setDownloadingToday(true);
@@ -194,6 +192,17 @@ const OrdersPage = () => {
     return parts.join(' • ') || '—';
   };
 
+  const getBoySearchText = (boy) => {
+    if (!boy) return '';
+    const parts = [
+      boy.name, boy.phone, boy.email, boy.city,
+      ...(Array.isArray(boy.wardIds) ? boy.wardIds.map(String) : []),
+      ...(Array.isArray(boy.wardNames) ? boy.wardNames : []),
+      ...(Array.isArray(boy.areas) ? boy.areas : [])
+    ].filter(Boolean);
+    return parts.join(' ').toLowerCase();
+  };
+
   const handleAssignDeliveryBoy = async (orderId, deliveryBoyId) => {
     try {
       setAssigningOrderId(orderId);
@@ -217,73 +226,67 @@ const OrdersPage = () => {
     }
   };
 
-  const openEditAddress = (order) => {
-    setEditAddressOrder(order);
-    setEditAddressForm({
-      name: order.name || order.shippingAddress?.name || '',
-      phone: order.shippingAddress?.phone || '',
-      city: order.shippingAddress?.city || '',
-      wardId: order.wardId != null ? String(order.wardId) : '',
-      typedArea: order.typedArea || '',
-      street: order.shippingAddress?.street || '',
-      postalCode: order.shippingAddress?.postalCode || '',
-      state: order.shippingAddress?.state || '',
-      country: order.shippingAddress?.country || '',
-      email: order.shippingAddress?.email || ''
+  const toggleOrderSelect = (orderId) => {
+    setSelectedOrderIds(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
     });
   };
 
-  const closeEditAddress = () => {
-    setEditAddressOrder(null);
-    setEditAddressLoading(false);
+  const clearSelection = () => {
+    setSelectedOrderIds(new Set());
   };
 
-  const handleEditAddressSubmit = async (e) => {
-    e.preventDefault();
-    if (!editAddressOrder) return;
+  const handleBulkAssign = async (deliveryBoyId) => {
+    if (!deliveryBoyId) { alert('Select a delivery boy'); return; }
+    const ids = Array.from(selectedOrderIds);
+    if (ids.length === 0) { alert('No orders selected'); return; }
 
-    try {
-      setEditAddressLoading(true);
-      const payload = {
-        name: editAddressForm.name,
-        phone: editAddressForm.phone,
-        city: editAddressForm.city,
-        wardId: editAddressForm.wardId === '' ? null : editAddressForm.wardId,
-        typedArea: editAddressForm.typedArea,
-        street: editAddressForm.street,
-        postalCode: editAddressForm.postalCode,
-        state: editAddressForm.state,
-        country: editAddressForm.country,
-        email: editAddressForm.email,
-      };
+    setBulkAssigning(true);
+    let ok = 0, fail = 0;
 
-      const response = await ordersAPI.editOrderAddress(editAddressOrder._id, payload);
-
-      if (response.data?.success) {
-        setOrders(prev => prev.map(o =>
-          o._id === editAddressOrder._id
-            ? {
-                ...o,
-                name: response.data.order?.name ?? o.name,
-                wardId: response.data.order?.wardId ?? o.wardId,
-                wardName: response.data.order?.wardName ?? o.wardName,
-                typedArea: response.data.order?.typedArea ?? o.typedArea,
-                shippingAddress: response.data.order?.shippingAddress ?? o.shippingAddress,
-              }
-            : o
-        ));
-        alert('✅ Order address updated');
-        closeEditAddress();
-        setTimeout(() => fetchOrders(), 800);
-      } else {
-        alert(`❌ ${response.data?.message || 'Failed to update'}`);
+    for (const orderId of ids) {
+      try {
+        const res = await ordersAPI.assignDeliveryBoy(orderId, deliveryBoyId);
+        if (res.data?.success) ok++;
+        else fail++;
+      } catch {
+        fail++;
       }
-    } catch (err) {
-      alert(`❌ ${err.response?.data?.message || err.message}`);
-    } finally {
-      setEditAddressLoading(false);
     }
+
+    setBulkAssigning(false);
+    setBulkAssignModalOpen(false);
+    setBulkAssignSearchTerm('');
+    clearSelection();
+    await fetchOrders(true);
+
+    alert(`✅ Assigned ${ok} order${ok !== 1 ? 's' : ''}${fail > 0 ? ` • ❌ Failed ${fail}` : ''}`);
   };
+
+  const openAssignModal = (order) => {
+    setAssignModalOrder(order);
+    setAssignSearchTerm('');
+  };
+
+  const closeAssignModal = () => {
+    setAssignModalOrder(null);
+    setAssignSearchTerm('');
+  };
+
+  const filteredBoysForAssign = useMemo(() => {
+    if (!assignSearchTerm.trim()) return deliveryBoys;
+    const term = assignSearchTerm.trim().toLowerCase();
+    return deliveryBoys.filter(b => getBoySearchText(b).includes(term));
+  }, [assignSearchTerm, deliveryBoys]);
+
+  const filteredBoysForBulkAssign = useMemo(() => {
+    if (!bulkAssignSearchTerm.trim()) return deliveryBoys;
+    const term = bulkAssignSearchTerm.trim().toLowerCase();
+    return deliveryBoys.filter(b => getBoySearchText(b).includes(term));
+  }, [bulkAssignSearchTerm, deliveryBoys]);
 
   const handleDeleteOrder = async (orderId, orderNumber) => {
     if (!orderId) return;
@@ -304,12 +307,8 @@ const OrdersPage = () => {
   };
 
   const handleStatusUpdate = async (orderId, newStatus) => {
-    if (newStatus === 'cancelled') {
-      if (!window.confirm('⚠️ Cancel this order?')) return;
-    }
-    if (newStatus === 'delivered') {
-      if (!window.confirm('✅ Mark this order as delivered?')) return;
-    }
+    if (newStatus === 'cancelled' && !window.confirm('⚠️ Cancel this order?')) return;
+    if (newStatus === 'delivered' && !window.confirm('✅ Mark this order as delivered?')) return;
     try {
       setStatusUpdating(prev => ({ ...prev, [orderId]: true }));
       const response = await ordersAPI.updateOrderStatus(orderId, {
@@ -384,7 +383,7 @@ const OrdersPage = () => {
   };
 
   const getDeliveryStatusBadge = (status) => {
-    if (!status) return <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800">Unassigned</span>;
+    if (!status) return <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800 whitespace-nowrap">Unassigned</span>;
     const cfg = {
       unassigned: { color: 'bg-gray-100 text-gray-800', label: 'Unassigned' },
       assigned: { color: 'bg-blue-100 text-blue-800', label: 'Assigned' },
@@ -393,7 +392,7 @@ const OrdersPage = () => {
       returned: { color: 'bg-red-100 text-red-800', label: 'Returned' }
     };
     const c = cfg[status] || { color: 'bg-gray-100 text-gray-800', label: status };
-    return <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${c.color}`}>{c.label}</span>;
+    return <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${c.color}`}>{c.label}</span>;
   };
 
   const isRefundable = (order) => order && order.orderStatus === 'cancelled' && order.paymentStatus === 'completed' && order.refundStatus !== 'completed';
@@ -463,12 +462,6 @@ const OrdersPage = () => {
     catch { return 'Invalid Date'; }
   };
 
-  const formatShortDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    try { return new Date(dateString).toLocaleDateString('en-US', { year: '2-digit', month: 'short', day: 'numeric' }); }
-    catch { return 'Invalid Date'; }
-  };
-
   const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 
   const getStatusBadge = (status) => {
@@ -483,7 +476,7 @@ const OrdersPage = () => {
       processing: 'bg-blue-100 text-blue-800',
       refunded: 'bg-purple-100 text-purple-800'
     };
-    return <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${colors[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
+    return <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${colors[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
   };
 
   const getPaymentStatusBadge = (paymentStatus) => {
@@ -494,7 +487,7 @@ const OrdersPage = () => {
       failed: 'bg-red-100 text-red-800',
       refunded: 'bg-purple-100 text-purple-800'
     };
-    return <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${colors[paymentStatus] || 'bg-gray-100 text-gray-800'}`}>{paymentStatus}</span>;
+    return <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${colors[paymentStatus] || 'bg-gray-100 text-gray-800'}`}>{paymentStatus}</span>;
   };
 
   const getCustomerInfo = (order) => {
@@ -511,34 +504,16 @@ const OrdersPage = () => {
     return order._id || order.id || order.orderId;
   };
 
-  const truncateOrderId = (order) => {
-    const id = order.orderId || order.orderNumber || order._id || '';
-    return id.length > 12 ? id.slice(-8) : id;
-  };
-
-  const getFullAddress = (receiptData) => {
-    const addr = receiptData?.shippingAddress;
-    if (!addr) return '—';
-    const parts = [];
-    const typed = (receiptData?.typedArea || receiptData?.wardName || '').trim();
-    const street = (addr.street || '').trim();
-    if (typed && !street.toLowerCase().includes(typed.toLowerCase())) parts.push(typed);
-    if (street) parts.push(street);
-    if (addr.city) parts.push(addr.city);
-    if (addr.state) parts.push(addr.state);
-    if (addr.postalCode) parts.push(addr.postalCode);
-    return parts.length > 0 ? parts.join(', ') : '—';
-  };
-
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(o => o.orderStatus === 'pending').length;
   const deliveredOrders = orders.filter(o => o.orderStatus === 'delivered' || o.orderStatus === 'completed').length;
   const cancelledOrders = orders.filter(o => o.orderStatus === 'cancelled').length;
+  const selectedCount = selectedOrderIds.size;
 
   // ============================================================
-  // ✅ Reusable ORDER CARD — used for both mobile and desktop
+  // Order Card — mobile-first, aligned
   // ============================================================
-  const OrderCard = ({ order, index }) => {
+  const OrderCard = ({ order, index, viewMode = 'grid', expanded = false, onToggleExpand }) => {
     const customer = getCustomerInfo(order);
     const orderId = getOrderId(order);
     const isRefundableOrder = isRefundable(order);
@@ -547,303 +522,503 @@ const OrdersPage = () => {
     const paymentStatusOptionsList = getPaymentStatusOptions(order.paymentStatus);
     const isUpdating = statusUpdating[order._id];
     const isAssigning = assigningOrderId === order._id;
+    const isSelected = selectedOrderIds.has(order._id);
+    const isListView = viewMode === 'list';
 
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-        {/* Header strip */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#ff0000]/10 text-[#ff0000] flex items-center justify-center text-xs font-bold flex-shrink-0">
+      <div
+        className={`rounded-xl border-2 shadow-sm hover:shadow-md transition-all overflow-hidden ${
+          isSelected
+            ? 'border-[#ff0000] ring-2 sm:ring-4 ring-[#ff0000]/25 bg-red-50/50'
+            : 'border-gray-200 bg-white'
+        } ${isListView ? 'w-full' : ''}`}
+      >
+        {/* Header */}
+        <div className={`flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b ${isSelected ? 'bg-red-100/70 border-red-200' : 'bg-gradient-to-r from-gray-50 to-white border-gray-200'}`}>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            {/* Checkbox */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); toggleOrderSelect(order._id); }}
+              className={`flex-shrink-0 w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all border-2 ${
+                isSelected
+                  ? 'bg-[#ff0000] border-[#ff0000] text-white shadow-md'
+                  : 'bg-white border-gray-300 text-gray-400 hover:border-[#ff0000] hover:text-[#ff0000]'
+              }`}
+              aria-label={isSelected ? 'Deselect order' : 'Select order'}
+            >
+              {isSelected ? <FaCheck size={13} className="sm:w-4 sm:h-4" /> : <FaSquare size={11} className="sm:w-3.5 sm:h-3.5" />}
+            </button>
+
+            {/* S.No */}
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold flex-shrink-0 ${isSelected ? 'bg-[#ff0000] text-white' : 'bg-[#ff0000]/10 text-[#ff0000]'}`}>
               {index + 1}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-mono font-bold text-gray-800 truncate">
+
+            {/* Order ID + date */}
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] sm:text-xs font-mono font-bold text-gray-800 truncate">
                 #{order.orderId || order._id?.slice(-8)}
               </p>
-              <p className="text-[11px] text-gray-500">{formatDate(order.createdAt)}</p>
+              <p className="text-[10px] sm:text-[11px] text-gray-500 truncate">{formatDate(order.createdAt)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+
+          {/* Right: badges + expand */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {getStatusBadge(order.orderStatus)}
             {getPaymentStatusBadge(order.paymentStatus)}
-          </div>
-        </div>
 
-        {/* Body */}
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* LEFT: Customer + Address */}
-          <div className="space-y-3">
-            {/* Customer */}
-            <div className="flex items-start gap-2">
-              <FaUser className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-800 truncate">{customer.name}</p>
-                {customer.phone && (
-                  <a href={`tel:${customer.phone}`} className="text-[11px] text-[#ff0000] hover:underline flex items-center gap-1">
-                    <FaPhone size={9} /> {customer.phone}
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Address block */}
-            <div className="flex items-start gap-2">
-              <FaMapMarkerAlt className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
-              <div className="min-w-0 text-[11px] text-gray-600 space-y-0.5">
-                {order.wardName && (
-                  <p className="text-blue-700 font-medium">Ward {order.wardId} — {order.wardName}</p>
-                )}
-                {order.typedArea && (
-                  <p className="text-orange-700">🏠 {order.typedArea}</p>
-                )}
-                {order.shippingAddress?.street && (
-                  <p>📍 {order.shippingAddress.street}</p>
-                )}
-                {order.shippingAddress?.city && (
-                  <p>🏙️ {order.shippingAddress.city}{order.shippingAddress.postalCode ? ` - ${order.shippingAddress.postalCode}` : ''}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Items summary */}
-            <div className="flex items-start gap-2">
-              <FaBox className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
-              <div className="min-w-0">
-                <p className="text-[11px] text-gray-600">
-                  <b>{order.products?.length || 0}</b> item(s)
-                  {order.products?.[0] && (
-                    <span className="text-gray-500"> — {order.products[0].name}{order.products.length > 1 ? ` +${order.products.length - 1} more` : ''}</span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT: Delivery + Amount + Actions */}
-          <div className="space-y-3">
-            {/* Delivery boy dropdown */}
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1 mb-1">
-                <FaTruck size={10} /> Delivery Boy
-              </label>
-              <select
-                value={assigned?._id || assigned?.id || ''}
-                onChange={(e) => handleAssignDeliveryBoy(order._id, e.target.value || null)}
-                disabled={isAssigning}
-                className={`w-full text-xs border border-gray-300 rounded-lg px-2.5 py-2 bg-white font-medium ${isAssigning ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-[#ff0000]'} transition-colors`}
+            {isListView && (
+              <button
+                type="button"
+                onClick={onToggleExpand}
+                className="ml-0.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label={expanded ? 'Collapse' : 'Expand'}
               >
-                <option value="">── Unassigned ──</option>
-                {deliveryBoys.map(b => {
-                  const id = b._id || b.id;
-                  const loc = b.city ? b.city.toUpperCase() : (b.areas?.join(', ') || '');
-                  return <option key={id} value={id}>{b.name} {loc ? `(${loc})` : ''}</option>;
-                })}
-              </select>
-              {assigned && (
-                <p className="mt-1 text-[10px] text-gray-500 flex items-start gap-1">
-                  <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={9} />
-                  <span className="break-words">{getBoyLocation(assigned)}</span>
-                </p>
-              )}
-            </div>
-
-            {/* Amount + delivery status */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-              <div>
-                <p className="text-[10px] text-gray-500">Total</p>
-                <p className="text-base font-bold text-gray-800">{formatCurrency(order.finalAmount || 0)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-gray-500">Delivery</p>
-                {getDeliveryStatusBadge(order.deliveryStatus)}
-              </div>
-            </div>
-
-            {/* Order + Payment status selects */}
-            {userRole === 'admin' && (
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-gray-500 block mb-0.5">Order Status</label>
-                  <select
-                    value={order.orderStatus}
-                    onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
-                    disabled={isUpdating}
-                    className="w-full text-[11px] border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
-                  >
-                    {statusOptionsList.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] text-gray-500 block mb-0.5">Payment Status</label>
-                  <select
-                    value={order.paymentStatus}
-                    onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value)}
-                    disabled={isUpdating}
-                    className="w-full text-[11px] border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
-                  >
-                    {paymentStatusOptionsList.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-              </div>
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  className={`text-gray-600 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                >
+                  <path d="M8 11L3 6h10L8 11z" />
+                </svg>
+              </button>
             )}
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="px-4 py-3 bg-gray-50 border-t flex flex-wrap gap-2">
-          <button
-            onClick={() => fetchOrderReceipt(orderId)}
-            className="flex-1 min-w-[100px] bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-          >
-            🧾 Receipt
-          </button>
-          {userRole === 'admin' && (
-            <button
-              onClick={() => openEditAddress(order)}
-              className="flex-1 min-w-[100px] bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
-            >
-              <FaEdit size={11} /> Edit Address
-            </button>
-          )}
-          {userRole === 'admin' && (
-            <button
-              onClick={() => setDeleteModal({ show: true, orderId: order._id, orderNumber: order.orderId })}
-              className="flex-1 min-w-[100px] bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-            >
-              🗑️ Delete
-            </button>
-          )}
-          {isRefundableOrder && (
-            <button
-              onClick={() => processRefund(order)}
-              disabled={refundLoading && activeRefundOrderId === order._id}
-              className="flex-1 min-w-[100px] bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-            >
-              💰 Refund
-            </button>
-          )}
+        {/* List view — compact summary when NOT expanded */}
+        {isListView && !expanded && (
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3">
+            {/* Top row: name + phone */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-[13px] mb-1.5">
+              <span className="inline-flex items-center gap-1.5 min-w-0">
+                <FaUser className="text-gray-400 flex-shrink-0" size={11} />
+                <span className="font-semibold text-gray-800 truncate">{customer.name}</span>
+              </span>
+
+              {customer.phone && (
+                <a href={`tel:${customer.phone}`} className="inline-flex items-center gap-1.5 text-[#ff0000] hover:underline whitespace-nowrap">
+                  <FaPhone size={10} /> {customer.phone}
+                </a>
+              )}
+            </div>
+
+            {/* Middle row: ward / area */}
+            {(order.wardName || order.typedArea || order.shippingAddress?.city) && (
+              <div className="flex items-start gap-1.5 text-[11px] sm:text-xs text-gray-600 mb-1.5">
+                <FaMapMarkerAlt className="text-gray-400 flex-shrink-0 mt-0.5" size={11} />
+                <span className="break-words min-w-0">
+                  {order.wardName ? `Ward ${order.wardId} — ${order.wardName}` : order.typedArea || order.shippingAddress?.city}
+                </span>
+              </div>
+            )}
+
+            {/* Bottom row: items, delivery boy, total, actions */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] sm:text-xs">
+              <span className="inline-flex items-center gap-1 text-gray-600 whitespace-nowrap">
+                <FaBox className="text-gray-400" size={11} />
+                {order.products?.length || 0} item(s)
+              </span>
+
+              <span className="inline-flex items-center gap-1 min-w-0">
+                <FaTruck className={assigned ? 'text-green-600 flex-shrink-0' : 'text-gray-400 flex-shrink-0'} size={11} />
+                <span className={`truncate ${assigned ? 'font-semibold text-gray-800' : 'text-gray-500'}`}>
+                  {assigned ? assigned.name : 'Unassigned'}
+                </span>
+              </span>
+
+              <span className="font-bold text-gray-900 whitespace-nowrap">{formatCurrency(order.finalAmount || 0)}</span>
+
+              <div className="flex gap-1.5 ml-auto">
+                <button
+                  onClick={(e) => { e.stopPropagation(); openAssignModal(order); }}
+                  disabled={isAssigning}
+                  className="px-2.5 py-1 bg-[#ff0000] hover:bg-[#cc0000] text-white text-[10px] rounded font-semibold disabled:opacity-50 whitespace-nowrap"
+                >
+                  {assigned ? 'Change' : 'Assign'}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); fetchOrderReceipt(orderId); }}
+                  className="px-2.5 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] rounded font-semibold whitespace-nowrap"
+                >
+                  🧾 Receipt
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+                  className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] rounded font-semibold whitespace-nowrap"
+                >
+                  View
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full details */}
+        {(!isListView || expanded) && (
+          <>
+            <div className="p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              {/* LEFT */}
+              <div className="space-y-2.5 sm:space-y-3">
+                <div className="flex items-start gap-2">
+                  <FaUser className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-800 truncate">{customer.name}</p>
+                    {customer.phone && (
+                      <a href={`tel:${customer.phone}`} className="text-[11px] text-[#ff0000] hover:underline flex items-center gap-1 break-all">
+                        <FaPhone size={9} className="flex-shrink-0" /> {customer.phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <FaMapMarkerAlt className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
+                  <div className="min-w-0 text-[11px] text-gray-600 space-y-0.5">
+                    {order.wardName && <p className="text-blue-700 font-medium break-words">Ward {order.wardId} — {order.wardName}</p>}
+                    {order.typedArea && <p className="text-orange-700 break-words">🏠 {order.typedArea}</p>}
+                    {order.shippingAddress?.street && <p className="break-words">📍 {order.shippingAddress.street}</p>}
+                    {order.shippingAddress?.city && (
+                      <p className="break-words">🏙️ {order.shippingAddress.city}{order.shippingAddress.postalCode ? ` - ${order.shippingAddress.postalCode}` : ''}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <FaBox className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-gray-600 break-words">
+                      <b>{order.products?.length || 0}</b> item(s)
+                      {order.products?.[0] && (
+                        <span className="text-gray-500"> — {order.products[0].name}{order.products.length > 1 ? ` +${order.products.length - 1} more` : ''}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT */}
+              <div className="space-y-2.5 sm:space-y-3">
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1 mb-1">
+                    <FaTruck size={10} /> Delivery Boy
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => openAssignModal(order)}
+                    disabled={isAssigning}
+                    className={`w-full flex items-center justify-between gap-2 text-xs border border-gray-300 rounded-lg px-3 py-2 bg-white hover:border-[#ff0000] transition-colors text-left ${isAssigning ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className="min-w-0 flex items-center gap-2">
+                      <FaTruck className={assigned ? 'text-green-600 flex-shrink-0' : 'text-gray-400 flex-shrink-0'} size={11} />
+                      <span className={`font-medium truncate ${assigned ? 'text-gray-800' : 'text-gray-500'}`}>
+                        {assigned ? assigned.name : 'Choose Delivery Boy'}
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-[#ff0000] font-semibold flex-shrink-0">
+                      {assigned ? 'Change' : 'Select'}
+                    </span>
+                  </button>
+                  {assigned && (
+                    <p className="mt-1 text-[10px] text-gray-500 flex items-start gap-1">
+                      <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={9} />
+                      <span className="break-words">{getBoyLocation(assigned)}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-gray-500">Total</p>
+                    <p className="text-sm sm:text-base font-bold text-gray-800 truncate">{formatCurrency(order.finalAmount || 0)}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[10px] text-gray-500">Delivery</p>
+                    {getDeliveryStatusBadge(order.deliveryStatus)}
+                  </div>
+                </div>
+
+                {userRole === 'admin' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
+                      <label className="text-[10px] text-gray-500 block mb-0.5">Order Status</label>
+                      <select
+                        value={order.orderStatus}
+                        onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
+                        disabled={isUpdating}
+                        className="w-full text-[11px] border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
+                      >
+                        {statusOptionsList.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                    <div className="min-w-0">
+                      <label className="text-[10px] text-gray-500 block mb-0.5">Payment Status</label>
+                      <select
+                        value={order.paymentStatus}
+                        onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value)}
+                        disabled={isUpdating}
+                        className="w-full text-[11px] border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
+                      >
+                        {paymentStatusOptionsList.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className={`px-3 sm:px-4 py-2.5 sm:py-3 border-t flex flex-wrap gap-2 ${isSelected ? 'bg-red-50/70 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+              <button
+                onClick={() => fetchOrderReceipt(orderId)}
+                className="flex-1 min-w-[100px] bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded-lg text-[11px] sm:text-xs font-medium transition-colors"
+              >
+                🧾 Receipt
+              </button>
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => setDeleteModal({ show: true, orderId: order._id, orderNumber: order.orderId })}
+                  className="flex-1 min-w-[100px] bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-[11px] sm:text-xs font-medium transition-colors"
+                >
+                  🗑️ Delete
+                </button>
+              )}
+              {isRefundableOrder && (
+                <button
+                  onClick={() => processRefund(order)}
+                  disabled={refundLoading && activeRefundOrderId === order._id}
+                  className="flex-1 min-w-[100px] bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-[11px] sm:text-xs font-medium transition-colors disabled:opacity-50"
+                >
+                  💰 Refund
+                </button>
+              )}
+              {isListView && (
+                <button
+                  onClick={onToggleExpand}
+                  className="flex-1 min-w-[100px] bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-[11px] sm:text-xs font-medium transition-colors"
+                >
+                  ▲ Collapse
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // ============================================================
+  // Assign Delivery Boy Modal (single)
+  // ============================================================
+  const AssignDeliveryBoyModal = ({ order, boys, searchTerm, setSearchTerm, onClose, onSelect, busy }) => {
+    if (!order) return null;
+
+    const currentlyAssignedId = (() => {
+      const a = getAssignedBoy(order);
+      return a?._id || a?.id || '';
+    })();
+
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-2 sm:p-4 z-50">
+        <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl">
+          <div className="p-3 sm:p-4 border-b flex justify-between items-center bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded-t-xl">
+            <div className="flex items-center gap-2 min-w-0">
+              <FaTruck className="flex-shrink-0" />
+              <div className="min-w-0">
+                <h2 className="font-bold text-sm sm:text-base truncate">Choose Delivery Boy</h2>
+                <p className="text-white/80 text-[11px] truncate">
+                  Order #{order.orderId || order._id?.slice(-8)} • {order.wardName ? `Ward ${order.wardId}` : order.shippingAddress?.city || ''}
+                </p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded hover:bg-white/30 flex-shrink-0">✕</button>
+          </div>
+
+          <div className="p-3 border-b bg-gray-50">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search by name, phone, ward, city, area..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {boys.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <FaTruck className="mx-auto text-gray-300 mb-3" size={40} />
+                <p className="text-sm font-medium text-gray-700">No delivery boys found</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {searchTerm ? 'Try a different search term.' : 'Add delivery boys first.'}
+                </p>
+              </div>
+            ) : (
+              boys.map((boy) => {
+                const id = boy._id || boy.id;
+                const isCurrently = currentlyAssignedId === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => onSelect(id)}
+                    disabled={busy || isCurrently}
+                    className={`w-full flex items-start gap-3 px-3 sm:px-4 py-3 text-left border-b transition-colors ${isCurrently ? 'bg-green-50 cursor-default' : 'hover:bg-gray-50 cursor-pointer'}`}
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isCurrently ? 'bg-green-500' : 'bg-[#ff0000]/10'}`}>
+                      <span className={`text-sm font-bold ${isCurrently ? 'text-white' : 'text-[#ff0000]'}`}>
+                        {(boy.name || '?').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{boy.name}</p>
+                        {isCurrently && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-[10px] font-bold rounded-full whitespace-nowrap">
+                            CURRENT
+                          </span>
+                        )}
+                      </div>
+                      {boy.phone && (
+                        <p className="text-[11px] text-gray-500 truncate flex items-center gap-1">
+                          <FaPhone size={9} className="flex-shrink-0" /> {boy.phone}
+                        </p>
+                      )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {boy.city && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800">
+                            <FaMapMarkerAlt size={8} /> {boy.city.toUpperCase()}
+                          </span>
+                        )}
+                        {Array.isArray(boy.wardIds) && boy.wardIds.length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800">
+                            Wards {boy.wardIds.join(',')}
+                          </span>
+                        )}
+                        {Array.isArray(boy.areas) && boy.areas.length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 break-words">
+                            {boy.areas.join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          <div className="p-3 border-t bg-gray-50 text-center text-[11px] text-gray-500">
+            {boys.length} delivery boy{boys.length !== 1 ? 's' : ''} shown
+          </div>
         </div>
       </div>
     );
   };
 
   // ============================================================
-  // Edit Address Modal
+  // BULK Assign Modal
   // ============================================================
-  const EditAddressModal = ({ order, form, setForm, onClose, onSubmit, loading }) => {
-    if (!order) return null;
-
-    const wardsByCity = wards.reduce((acc, w) => {
-      const key = (w.city || 'karaikudi').toLowerCase();
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(w);
-      return acc;
-    }, {});
-
-    const cityKey = (form.city || '').trim().toLowerCase();
-    const availableWards = wardsByCity[cityKey] || [];
-
+  const BulkAssignModal = ({ count, boys, searchTerm, setSearchTerm, onClose, onSelect, busy }) => {
     return (
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-2 sm:p-4 z-50">
-        <form onSubmit={onSubmit} className="bg-white rounded-xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl">
-          <div className="p-4 border-b flex justify-between items-center bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded-t-xl">
-            <div className="flex items-center gap-2">
-              <FaEdit />
-              <h2 className="font-bold text-sm sm:text-base">Edit Order Address</h2>
+        <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl">
+          <div className="p-3 sm:p-4 border-b flex justify-between items-center bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded-t-xl">
+            <div className="flex items-center gap-2 min-w-0">
+              <FaTruck className="flex-shrink-0" />
+              <div className="min-w-0">
+                <h2 className="font-bold text-sm sm:text-base truncate">Assign {count} order{count !== 1 ? 's' : ''}</h2>
+                <p className="text-white/80 text-[11px] truncate">
+                  Same delivery boy will be set for all selected orders
+                </p>
+              </div>
             </div>
-            <button type="button" onClick={onClose} className="w-7 h-7 flex items-center justify-center bg-white/20 rounded text-sm hover:bg-white/30">✕</button>
+            <button onClick={onClose} disabled={busy} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded hover:bg-white/30 flex-shrink-0 disabled:opacity-50">✕</button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div className="bg-gray-50 p-3 rounded-lg text-xs text-gray-500">
-              Order <b className="font-mono">#{order.orderId || order._id}</b>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Customer Name</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Phone</label>
-                <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Email</label>
-                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">City</label>
-                <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value, wardId: '' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#ff0000] focus:border-transparent">
-                  <option value="">-- Select city --</option>
-                  <option value="karaikudi">Karaikudi</option>
-                  <option value="pudukkottai">Pudukkottai</option>
-                  <option value={form.city && !['karaikudi', 'pudukkottai'].includes(form.city) ? form.city : '_other'}>
-                    {form.city && !['karaikudi', 'pudukkottai'].includes(form.city) ? form.city : 'Other (type below)'}
-                  </option>
-                </select>
-                {(!['karaikudi', 'pudukkottai'].includes(form.city)) && (
-                  <input type="text" placeholder="Type custom city" value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Ward</label>
-                <select value={form.wardId} onChange={(e) => setForm({ ...form, wardId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" disabled={!form.city}>
-                  <option value="">── No ward ──</option>
-                  {availableWards.map(w => (
-                    <option key={w.wardId} value={String(w.wardId)}>
-                      Ward {w.wardId} — {w.wardName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Typed Area</label>
-                <input type="text" value={form.typedArea} onChange={(e) => setForm({ ...form, typedArea: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Street Address</label>
-                <input type="text" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Postal Code</label>
-                <input type="text" value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">State</label>
-                <input type="text" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">Country</label>
-                <input type="text" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-[#ff0000] focus:border-transparent" />
-              </div>
+          <div className="p-3 border-b bg-gray-50">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <input
+                type="text"
+                autoFocus
+                disabled={busy}
+                placeholder="Search by name, phone, ward, city, area..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent bg-white disabled:opacity-60"
+              />
             </div>
           </div>
 
-          <div className="p-4 border-t bg-gray-50 flex justify-end gap-2 rounded-b-xl">
-            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-xs font-medium hover:bg-gray-100">Cancel</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white rounded-lg text-xs font-medium hover:from-[#cc0000] hover:to-[#aa0000] disabled:opacity-50">
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
+          <div className="flex-1 overflow-y-auto">
+            {boys.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <FaTruck className="mx-auto text-gray-300 mb-3" size={40} />
+                <p className="text-sm font-medium text-gray-700">No delivery boys found</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {searchTerm ? 'Try a different search term.' : 'Add delivery boys first.'}
+                </p>
+              </div>
+            ) : (
+              boys.map((boy) => {
+                const id = boy._id || boy.id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => onSelect(id)}
+                    disabled={busy}
+                    className="w-full flex items-start gap-3 px-3 sm:px-4 py-3 text-left border-b hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-[#ff0000]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-[#ff0000]">
+                        {(boy.name || '?').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{boy.name}</p>
+                      {boy.phone && (
+                        <p className="text-[11px] text-gray-500 truncate flex items-center gap-1">
+                          <FaPhone size={9} className="flex-shrink-0" /> {boy.phone}
+                        </p>
+                      )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {boy.city && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800">
+                            <FaMapMarkerAlt size={8} /> {boy.city.toUpperCase()}
+                          </span>
+                        )}
+                        {Array.isArray(boy.wardIds) && boy.wardIds.length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800">
+                            Wards {boy.wardIds.join(',')}
+                          </span>
+                        )}
+                        {Array.isArray(boy.areas) && boy.areas.length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 break-words">
+                            {boy.areas.join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
-        </form>
+
+          <div className="p-3 border-t bg-gray-50 text-center text-[11px] text-gray-500">
+            {busy ? 'Assigning orders...' : `${boys.length} delivery boy${boys.length !== 1 ? 's' : ''} shown`}
+          </div>
+        </div>
       </div>
     );
   };
@@ -870,7 +1045,7 @@ const OrdersPage = () => {
     return (
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-2 sm:p-4 z-50">
         <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl">
-          <div className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white p-4 flex justify-between items-center rounded-t-xl">
+          <div className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] text-white p-3 sm:p-4 flex justify-between items-center rounded-t-xl">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-base">🛒</div>
               <div>
@@ -881,7 +1056,7 @@ const OrdersPage = () => {
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded hover:bg-white/30">✕</button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4">
             <div className="mb-4 space-y-2">
               <div className="flex justify-between"><span className="text-xs text-gray-500">Date:</span><span className="text-xs font-medium">{formatDate(orderDate)}</span></div>
               <div className="flex justify-between"><span className="text-xs text-gray-500">Payment:</span>{getPaymentStatusBadge(paymentStatus)}</div>
@@ -896,6 +1071,7 @@ const OrdersPage = () => {
               {shippingAddress && (
                 <div className="mt-2 pt-2 border-t space-y-1">
                   <div className="font-medium text-gray-600">Shipping Address:</div>
+                  <div><b>Area:</b> {receiptData.typedArea || receiptData.wardName || '—'}</div>
                   <div><b>Street:</b> {shippingAddress.street || '—'}</div>
                   <div><b>City:</b> {shippingAddress.city || '—'}</div>
                   <div><b>State / PIN:</b> {[shippingAddress.state, shippingAddress.postalCode].filter(Boolean).join(' - ') || '—'}</div>
@@ -907,12 +1083,12 @@ const OrdersPage = () => {
               <h3 className="font-bold text-sm mb-2">Items ({items.length})</h3>
               <div className="space-y-2">
                 {items.map((item, i) => (
-                  <div key={i} className="flex justify-between border-b pb-2 text-xs">
-                    <div>
-                      <div className="font-medium">{item.product?.name || item.name}</div>
+                  <div key={i} className="flex justify-between border-b pb-2 text-xs gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium break-words">{item.product?.name || item.name}</div>
                       {item.variantName && <div className="text-gray-500">{item.variantName}</div>}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       <div className="font-medium">{formatCurrency((item.price || 0) * (item.quantity || 1))}</div>
                       <div className="text-gray-500">{item.quantity} × {formatCurrency(item.price || 0)}</div>
                     </div>
@@ -929,7 +1105,7 @@ const OrdersPage = () => {
             </div>
           </div>
 
-          <div className="p-4 border-t bg-gray-50 flex justify-end rounded-b-xl">
+          <div className="p-3 sm:p-4 border-t bg-gray-50 flex justify-end rounded-b-xl">
             <button onClick={onDownloadPDF} disabled={receiptLoading} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">
               📥 Download PDF
             </button>
@@ -976,69 +1152,132 @@ const OrdersPage = () => {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 w-full min-w-0">
-        {/* Header */}
         <header className="bg-white shadow-sm sticky top-0 z-10">
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3">
             <h1 className="text-base sm:text-xl font-bold text-gray-800 truncate">Orders Management</h1>
-            <button onClick={logout} className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center text-sm">
+            <button onClick={logout} className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center text-sm flex-shrink-0">
               <span className="hidden sm:inline mr-2">Logout</span><LogOut size={16} />
             </button>
           </div>
         </header>
 
         <main className="p-3 sm:p-6 max-w-7xl mx-auto w-full">
-          {/* Page heading + Actions */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <div>
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <FaTag className="text-[#ff0000]" size={16} />All Orders
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">{filteredOrders.length} of {totalOrders} orders</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {/* ✅ Today's Orders PDF button */}
-              <button
-                onClick={handleDownloadTodayOrders}
-                disabled={downloadingToday}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 shadow-sm"
-              >
-                {downloadingToday ? '📄 Generating...' : "📄 Today's Orders PDF"}
-              </button>
+          {/* Heading + actions */}
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                  <FaTag className="text-[#ff0000] flex-shrink-0" size={16} />All Orders
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {filteredOrders.length} of {totalOrders} orders
+                  {selectedCount > 0 && (
+                    <span className="ml-2 text-[#ff0000] font-semibold">• {selectedCount} selected</span>
+                  )}
+                </p>
+              </div>
 
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 shadow-sm"
-              >
-                <FaSyncAlt className={refreshing ? 'animate-spin' : ''} size={12} />
-                {refreshing ? 'Refreshing...' : 'Refresh'}
-              </button>
+              {/* Actions row */}
+              <div className="flex flex-wrap gap-2">
+                {selectedCount >= 2 && (
+                  <>
+                    <button
+                      onClick={() => { setBulkAssignModalOpen(true); setBulkAssignSearchTerm(''); }}
+                      className="bg-[#ff0000] hover:bg-[#cc0000] text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 shadow-sm flex-shrink-0"
+                    >
+                      <FaTruck size={11} /> Assign {selectedCount}
+                    </button>
+                    <button
+                      onClick={clearSelection}
+                      className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm flex-shrink-0"
+                    >
+                      Clear
+                    </button>
+                  </>
+                )}
+
+                {/* View mode toggle */}
+                <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden shadow-sm flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={`px-2.5 sm:px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                      viewMode === 'grid'
+                        ? 'bg-[#ff0000] text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                    title="Grid view"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <rect x="0" y="0" width="7" height="7" rx="1" />
+                      <rect x="9" y="0" width="7" height="7" rx="1" />
+                      <rect x="0" y="9" width="7" height="7" rx="1" />
+                      <rect x="9" y="9" width="7" height="7" rx="1" />
+                    </svg>
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setViewMode('list'); setExpandedOrderId(null); }}
+                    className={`px-2.5 sm:px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors border-l border-gray-300 ${
+                      viewMode === 'list'
+                        ? 'bg-[#ff0000] text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                    title="List view"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <rect x="0" y="0" width="16" height="3" rx="1" />
+                      <rect x="0" y="6.5" width="16" height="3" rx="1" />
+                      <rect x="0" y="13" width="16" height="3" rx="1" />
+                    </svg>
+                    <span className="hidden sm:inline">List</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleDownloadTodayOrders}
+                  disabled={downloadingToday}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 shadow-sm flex-shrink-0"
+                >
+                  {downloadingToday ? '📄...' : <><span className="hidden sm:inline">📄 Today's Orders PDF</span><span className="sm:hidden">📄 PDF</span></>}
+                </button>
+
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 shadow-sm flex-shrink-0"
+                >
+                  <FaSyncAlt className={refreshing ? 'animate-spin' : ''} size={11} />
+                  <span className="hidden sm:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
             {[
               { label: 'Total Orders', value: totalOrders, gradient: 'from-blue-500 to-blue-600' },
               { label: 'Pending', value: pendingOrders, gradient: 'from-yellow-500 to-yellow-600' },
               { label: 'Delivered', value: deliveredOrders, gradient: 'from-green-500 to-green-600' },
               { label: 'Cancelled', value: cancelledOrders, gradient: 'from-red-500 to-red-600' }
             ].map((c, i) => (
-              <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                <p className="text-gray-500 text-xs font-medium">{c.label}</p>
-                <p className={`text-2xl font-bold mt-1 bg-gradient-to-r ${c.gradient} bg-clip-text text-transparent`}>{c.value}</p>
+              <div key={i} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 min-w-0">
+                <p className="text-gray-500 text-[10px] sm:text-xs font-medium truncate">{c.label}</p>
+                <p className={`text-lg sm:text-2xl font-bold mt-1 bg-gradient-to-r ${c.gradient} bg-clip-text text-transparent`}>{c.value}</p>
               </div>
             ))}
           </div>
 
           {/* Filter bar */}
-          <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 mb-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               <div className="relative sm:col-span-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input
                   type="text"
-                  placeholder="Search orders..."
+                  placeholder="Search order, name, city, ward..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
@@ -1070,7 +1309,7 @@ const OrdersPage = () => {
             </div>
           )}
 
-          {/* Orders List */}
+          {/* Orders list */}
           {filteredOrders.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
               <Search className="mx-auto h-12 w-12 text-gray-300" />
@@ -1078,24 +1317,46 @@ const OrdersPage = () => {
               <p className="text-xs text-gray-500 mt-1">Try adjusting your filters or search terms.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4' : 'space-y-2 sm:space-y-3'}>
               {filteredOrders.map((order, index) => (
-                <OrderCard key={order._id} order={order} index={index} />
+                <OrderCard
+                  key={order._id}
+                  order={order}
+                  index={index}
+                  viewMode={viewMode}
+                  expanded={expandedOrderId === order._id}
+                  onToggleExpand={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+                />
               ))}
             </div>
           )}
         </main>
       </div>
 
-      {/* Modals */}
-      {editAddressOrder && (
-        <EditAddressModal
-          order={editAddressOrder}
-          form={editAddressForm}
-          setForm={setEditAddressForm}
-          onClose={closeEditAddress}
-          onSubmit={handleEditAddressSubmit}
-          loading={editAddressLoading}
+      {assignModalOrder && (
+        <AssignDeliveryBoyModal
+          order={assignModalOrder}
+          boys={filteredBoysForAssign}
+          searchTerm={assignSearchTerm}
+          setSearchTerm={setAssignSearchTerm}
+          busy={assigningOrderId === assignModalOrder._id}
+          onClose={closeAssignModal}
+          onSelect={async (boyId) => {
+            await handleAssignDeliveryBoy(assignModalOrder._id, boyId);
+            closeAssignModal();
+          }}
+        />
+      )}
+
+      {bulkAssignModalOpen && (
+        <BulkAssignModal
+          count={selectedCount}
+          boys={filteredBoysForBulkAssign}
+          searchTerm={bulkAssignSearchTerm}
+          setSearchTerm={setBulkAssignSearchTerm}
+          busy={bulkAssigning}
+          onClose={() => { setBulkAssignModalOpen(false); setBulkAssignSearchTerm(''); }}
+          onSelect={(boyId) => handleBulkAssign(boyId)}
         />
       )}
 
