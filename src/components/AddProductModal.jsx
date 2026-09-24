@@ -182,6 +182,18 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
     setVariants(updatedVariants);
   };
 
+  // ✅ New: sanitize numeric text input (allow digits + optional decimal)
+  const handleNumericText = (index, field, rawValue, allowDecimal = true) => {
+    // strip everything except digits and (optionally) one dot
+    let cleaned = rawValue.replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '');
+    if (allowDecimal) {
+      // keep only first dot
+      const parts = cleaned.split('.');
+      if (parts.length > 2) cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    handleVariantChange(index, field, cleaned);
+  };
+
   const addVariant = () => {
     const varianttext = variants.length + 1;
     const newVariant = {
@@ -735,15 +747,15 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span className="text-gray-400 text-xs">₹</span>
                           </div>
+                          {/* ✅ Changed from type="number" to type="text" */}
                           <input
                             id={`variant-price-${index}`}
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             value={variant.price}
-                            onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
+                            onChange={(e) => handleNumericText(index, 'price', e.target.value, true)}
                             className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                             placeholder="0.00"
-                            min="0"
-                            step="0.01"
                             required
                           />
                         </div>
@@ -751,28 +763,29 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                       
                       <div>
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Stock *</label>
+                        {/* ✅ Changed from type="number" to type="text" */}
                         <input
                           id={`variant-stock-${index}`}
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           value={variant.stock}
-                          onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
+                          onChange={(e) => handleNumericText(index, 'stock', e.target.value, false)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="0"
-                          min="0"
                           required
                         />
                       </div>
                       
                       <div>
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Weight (Optional)</label>
+                        {/* ✅ Changed from type="number" to type="text" */}
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           value={variant.weight}
-                          onChange={(e) => handleVariantChange(index, 'weight', e.target.value)}
+                          onChange={(e) => handleNumericText(index, 'weight', e.target.value, true)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#ff0000]"
                           placeholder="e.g., 500"
-                          min="0"
-                          step="0.01"
                         />
                       </div>
                       

@@ -504,6 +504,26 @@ const OrdersPage = () => {
     return order._id || order.id || order.orderId;
   };
 
+  // ✅ Helper: build product summary string with weight + quantity
+  const buildProductSummary = (order, limit = null) => {
+    const products = order.products || [];
+    if (products.length === 0) return 'No items';
+
+    const list = limit ? products.slice(0, limit) : products;
+
+    const parts = list.map(p => {
+      const name = p.name || 'Item';
+      const weight = p.weight && p.weight > 0
+        ? ` (${p.weight}${p.weightUnit === 'gram' ? 'g' : p.weightUnit === 'kg' ? 'kg' : p.weightUnit || ''})`
+        : '';
+      const qty = p.quantity ? ` , quantity : ${p.quantity}` : '';
+      return `${name}${weight}${qty}`;
+    });
+
+    const more = limit && products.length > limit ? ` +${products.length - limit} more` : '';
+    return parts.join(', ') + more;
+  };
+
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(o => o.orderStatus === 'pending').length;
   const deliveredOrders = orders.filter(o => o.orderStatus === 'delivered' || o.orderStatus === 'completed').length;
@@ -617,11 +637,13 @@ const OrdersPage = () => {
               </div>
             )}
 
-            {/* Bottom row: items, delivery boy, total, actions */}
+            {/* Bottom row: items (with product name + weight + quantity), delivery boy, total, actions */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] sm:text-xs">
-              <span className="inline-flex items-center gap-1 text-gray-600 whitespace-nowrap">
-                <FaBox className="text-gray-400" size={11} />
-                {order.products?.length || 0} item(s)
+              <span className="inline-flex items-center gap-1 text-gray-600 min-w-0">
+                <FaBox className="text-gray-400 flex-shrink-0" size={11} />
+                <span className="truncate">
+                  {buildProductSummary(order, 1)}
+                </span>
               </span>
 
               <span className="inline-flex items-center gap-1 min-w-0">
@@ -694,7 +716,10 @@ const OrdersPage = () => {
                     <p className="text-[11px] text-gray-600 break-words">
                       <b>{order.products?.length || 0}</b> item(s)
                       {order.products?.[0] && (
-                        <span className="text-gray-500"> — {order.products[0].name}{order.products.length > 1 ? ` +${order.products.length - 1} more` : ''}</span>
+                        <span className="text-gray-500">
+                          {' — '}
+                          {buildProductSummary(order, 1).replace(/^\d+ item\(s\) — /, '')}
+                        </span>
                       )}
                     </p>
                   </div>
@@ -1042,6 +1067,12 @@ const OrdersPage = () => {
     const orderStatus = receiptData.orderStatus;
     const shippingAddress = receiptData.shippingAddress;
 
+    const formatWeight = (item) => {
+      if (!item.weight || item.weight <= 0) return null;
+      const unit = item.weightUnit === 'gram' ? 'g' : item.weightUnit === 'kg' ? 'kg' : (item.weightUnit || 'g');
+      return `${item.weight}${unit}`;
+    };
+
     return (
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-2 sm:p-4 z-50">
         <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl">
@@ -1071,7 +1102,6 @@ const OrdersPage = () => {
               {shippingAddress && (
                 <div className="mt-2 pt-2 border-t space-y-1">
                   <div className="font-medium text-gray-600">Shipping Address:</div>
-                  <div><b>Area:</b> {receiptData.typedArea || receiptData.wardName || '—'}</div>
                   <div><b>Street:</b> {shippingAddress.street || '—'}</div>
                   <div><b>City:</b> {shippingAddress.city || '—'}</div>
                   <div><b>State / PIN:</b> {[shippingAddress.state, shippingAddress.postalCode].filter(Boolean).join(' - ') || '—'}</div>
@@ -1082,18 +1112,24 @@ const OrdersPage = () => {
             <div className="mb-4">
               <h3 className="font-bold text-sm mb-2">Items ({items.length})</h3>
               <div className="space-y-2">
-                {items.map((item, i) => (
-                  <div key={i} className="flex justify-between border-b pb-2 text-xs gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium break-words">{item.product?.name || item.name}</div>
-                      {item.variantName && <div className="text-gray-500">{item.variantName}</div>}
+                {items.map((item, i) => {
+                  const weight = formatWeight(item);
+                  return (
+                    <div key={i} className="flex justify-between border-b pb-2 text-xs gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium break-words">{item.product?.name || item.name}</div>
+                        {item.variantName && <div className="text-gray-500">{item.variantName}</div>}
+                        {weight && (
+                          <div className="text-gray-500">Weight: {weight}</div>
+                        )}
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-medium">{formatCurrency((item.price || 0) * (item.quantity || 1))}</div>
+                        <div className="text-gray-500">{item.quantity} Quantity × {formatCurrency(item.price || 0)}</div>
+                      </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-medium">{formatCurrency((item.price || 0) * (item.quantity || 1))}</div>
-                      <div className="text-gray-500">{item.quantity} × {formatCurrency(item.price || 0)}</div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
