@@ -58,7 +58,7 @@ const Products = () => {
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Sorting State - Default 'newest'
+  // Sorting State
   const [sortOption, setSortOption] = useState('newest');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -76,19 +76,29 @@ const Products = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Fetch categories
+  // 🎯 FIXED: Fetch categories — handles ALL response formats
   const fetchCategories = async () => {
     try {
       console.log('📡 Fetching categories...');
       const response = await categoriesAPI.getAllCategories();
-      console.log('✅ Categories response:', response.data);
+      console.log('✅ Categories raw response:', response.data);
       
-      if (response.data && response.data.success) {
-        if (Array.isArray(response.data.data)) {
-          setCategories(response.data.data);
-          console.log(`✅ Loaded ${response.data.data.length} categories`);
-        }
+      let categoriesArray = [];
+      const data = response.data;
+
+      // Try all possible response shapes
+      if (data?.categories && Array.isArray(data.categories)) {
+        categoriesArray = data.categories;
+      } else if (data?.data && Array.isArray(data.data)) {
+        categoriesArray = data.data;
+      } else if (Array.isArray(data)) {
+        categoriesArray = data;
+      } else if (data?.success && Array.isArray(data.data)) {
+        categoriesArray = data.data;
       }
+
+      setCategories(categoriesArray);
+      console.log(`✅ Loaded ${categoriesArray.length} categories:`, categoriesArray.map(c => c.name));
     } catch (error) {
       console.error('❌ Error fetching categories:', error);
     }
@@ -130,22 +140,6 @@ const Products = () => {
       }
       
       console.log(`📊 Total products to render: ${productsArray.length}`);
-      
-      if (productsArray.length > 0) {
-        const firstProduct = productsArray[0];
-        console.log('🔍 First product structure:', {
-          id: firstProduct._id,
-          name: firstProduct.name,
-          stock: firstProduct.stock,
-          seller: firstProduct.seller,
-          hasImages: !!firstProduct.images,
-          imageCount: firstProduct.images?.length || 0,
-          imagePath: firstProduct.images?.[0]?.image,
-          category: firstProduct.category,
-          createdAt: firstProduct.createdAt
-        });
-      }
-      
       setProducts(productsArray);
       
     } catch (error) {
@@ -192,7 +186,7 @@ const Products = () => {
       });
     }
 
-    // Apply sorting - Newest First is default
+    // Apply sorting
     result.sort((a, b) => {
       switch (sortOption) {
         case 'newest':
@@ -443,9 +437,6 @@ const Products = () => {
       console.error('❌ Error in handleEditProduct:', error);
       
       if (error.response) {
-        console.error('Error status:', error.response.status);
-        console.error('Error data:', error.response.data);
-        
         if (error.response.status === 404) {
           setError('❌ Product not found or API endpoint not found.');
         } else if (error.response.status === 401) {
@@ -515,26 +506,26 @@ const Products = () => {
     return product.basePrice || product.price || '0';
   };
   
+  // Build full URL from key
   const getProductImage = (product) => {
-    // Check main images first
+    const R2_BASE = import.meta.env.VITE_R2_PUBLIC_URL;
+
     if (product.images && product.images.length > 0 && product.images[0]?.image) {
-      const filename = product.images[0].image.replace('/uploads/', '');
-      return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
+      const img = product.images[0].image;
+      return img.startsWith('http') ? img : `${R2_BASE}/${img}`;
     }
     
-    // Check variant images
     if (product.variants && product.variants.length > 0) {
       const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
       if (defaultVariant.images && defaultVariant.images.length > 0 && defaultVariant.images[0]?.image) {
-        const filename = defaultVariant.images[0].image.replace('/uploads/', '');
-        return `${import.meta.env.VITE_API_IMG_URL}/${filename}`;
+        const img = defaultVariant.images[0].image;
+        return img.startsWith('http') ? img : `${R2_BASE}/${img}`;
       }
     }
     
     return null;
   };
 
-  // Helper function to get variant stock display
   const getVariantStockDisplay = (product) => {
     if (product.variants && product.variants.length > 0) {
       return product.variants.map(variant => (
@@ -546,7 +537,6 @@ const Products = () => {
     return null;
   };
 
-  // Get sort button label based on current option
   const getSortLabel = () => {
     switch (sortOption) {
       case 'newest': return 'Newest First';
@@ -561,14 +551,12 @@ const Products = () => {
     }
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setSelectedCategory('all');
     setSortOption('newest');
     setSearchTerm('');
   };
 
-  // Safe rendering
   const productsToRender = Array.isArray(filteredProducts) ? filteredProducts : [];
 
   // Mobile Card View Component
@@ -594,7 +582,6 @@ const Products = () => {
             </div>
           </div>
           
-          {/* Status Badge */}
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${ 
             product.status === 'active' 
               ? 'bg-green-100 text-green-800'
@@ -639,7 +626,6 @@ const Products = () => {
           </div>
         </div>
         
-        {/* Image */}
         <div className="mb-3">
           <p className="text-xs text-gray-500 mb-1">Image</p>
           <div className="flex items-center space-x-3">
@@ -662,7 +648,6 @@ const Products = () => {
           </div>
         </div>
         
-        {/* Actions */}
         {isAdmin && (
           <div className="flex space-x-2 pt-3 border-t border-gray-100">
             <button
@@ -689,7 +674,6 @@ const Products = () => {
         <Sidebar />
         
         <div className="flex-1 w-full">
-          {/* Header */}
           <header className="bg-white shadow">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center">
@@ -709,10 +693,8 @@ const Products = () => {
             </div>
           </header>
 
-          {/* Main Content */}
           <main className="p-4 sm:p-6">
             <div className="mb-6 flex flex-col space-y-4">
-              {/* Top row with title and buttons */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-700">
                   All Products ({productsToRender.length})
@@ -741,7 +723,7 @@ const Products = () => {
                 </div>
               </div>
 
-              {/* Search and Filter - Single Line */}
+              {/* Search and Filter */}
               <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row gap-3">
                   {/* Search Input */}
@@ -778,20 +760,24 @@ const Products = () => {
                         >
                           All Categories
                         </button>
-                        {categories.map(category => (
-                          <button
-                            key={category._id}
-                            onClick={() => { setSelectedCategory(category._id); setFilterDropdownOpen(false); }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                          >
-                            {category.name}
-                          </button>
-                        ))}
+                        {categories.length > 0 ? (
+                          categories.map(category => (
+                            <button
+                              key={category._id}
+                              onClick={() => { setSelectedCategory(category._id); setFilterDropdownOpen(false); }}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              {category.name}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-gray-400">Loading categories...</div>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Sort Dropdown - Default Newest First */}
+                  {/* Sort Dropdown */}
                   <div className="relative w-full sm:w-40">
                     <button
                       onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
@@ -827,7 +813,7 @@ const Products = () => {
                     )}
                   </div>
 
-                  {/* Clear Button - Shows only when filters active */}
+                  {/* Clear Button */}
                   {(selectedCategory !== 'all' || sortOption !== 'newest' || searchTerm) && (
                     <button
                       onClick={clearFilters}
@@ -850,7 +836,6 @@ const Products = () => {
               </div>
             )}
 
-            {/* Products Display */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
               {loading ? (
                 <div className="text-center py-8">
@@ -859,7 +844,6 @@ const Products = () => {
                 </div>
               ) : (
                 <>
-                  {/* Desktop Table View */}
                   {!isMobile ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
@@ -940,10 +924,8 @@ const Products = () => {
             </div>
           </main>
 
-          {/* Add Product Modal */}
           <AddProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddProduct={handleAddProduct} />
 
-          {/* Edit Product Modal */}
           <EditProductModal isOpen={isEditModalOpen} onClose={closeEditModal} onEditProduct={handleEditProduct} product={editingProduct} />
         </div>
       </div>

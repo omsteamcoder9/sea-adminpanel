@@ -19,7 +19,15 @@ const Categories = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch categories from API
+  const R2_BASE = import.meta.env.VITE_R2_PUBLIC_URL;
+
+  // 🎯 Build full URL from key (or use as-is if already a full URL)
+  const getCategoryImage = (category) => {
+    if (!category.image) return null;
+    const img = category.image;
+    return img.startsWith('http') ? img : `${R2_BASE}/${img}`;
+  };
+
   const fetchCategories = async (showRefreshingState = false) => {
     try {
       if (showRefreshingState) {
@@ -59,21 +67,16 @@ const Categories = () => {
     fetchCategories();
   }, []);
 
-  // Search logic
   useEffect(() => {
     let results = [...categories];
-
-    // Search filter by name only
     if (searchTerm) {
       results = results.filter(category =>
         category.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     setFilteredCategories(results);
   }, [searchTerm, categories]);
 
-  // Handle manual refresh
   const handleRefresh = () => {
     fetchCategories(true);
   };
@@ -146,17 +149,12 @@ const Categories = () => {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
 
-      {/* Main Content Area */}
       <div className="flex-1 w-full">
-        {/* Header */}
         <header className="bg-white shadow">
           <div className="flex items-center justify-between px-4 py-3">
-            {/* Left side: Title */}
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-800">Categories Management</h1>
             </div>
-
-            {/* Right side: Logout button */}
             <div className="flex items-center">
               <button
                 onClick={logout}
@@ -170,14 +168,12 @@ const Categories = () => {
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="p-4 sm:p-6">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-700">
               All Categories ({categoriesToRender.length})
             </h2>
             <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
-              {/* Refresh Button */}
               <button
                 onClick={handleRefresh}
                 disabled={loading || refreshing}
@@ -190,7 +186,6 @@ const Categories = () => {
                 </span>
               </button>
               
-              {/* Add Category Button - Only for Admin */}
               {isAdmin && (
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -214,7 +209,6 @@ const Categories = () => {
             </div>
           )}
 
-          {/* Search Section */}
           <div className="mb-6 bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -228,7 +222,6 @@ const Categories = () => {
             </div>
           </div>
 
-          {/* Categories Table */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {loading ? (
               <div className="text-center py-8">
@@ -247,102 +240,132 @@ const Categories = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                {/* Desktop/Large Tablet View */}
+                {/* Desktop Table */}
                 <table className="hidden md:table min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        S.No
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created At
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                       {isAdmin && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       )}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {categoriesToRender.map((category, index) => (
-                      <tr key={category._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 text-center">
-                            {index + 1}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {category.name}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500">
-                            {new Date(category.createdAt).toLocaleDateString()}
-                          </div>
-                        </td>
-                        {isAdmin && (
+                    {categoriesToRender.map((category, index) => {
+                      const imageUrl = getCategoryImage(category);
+                      return (
+                        <tr key={category._id} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => openEditModal(category)}
-                                className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
-                              >
-                                <FaEdit className="mr-1" /> Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCategory(category._id)}
-                                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
-                              >
-                                <FaTrash className="mr-1" /> Delete
-                              </button>
-                            </div>
+                            <div className="text-sm font-medium text-gray-900 text-center">{index + 1}</div>
                           </td>
-                        )}
-                      </tr>
-                    ))}
+                          <td className="px-6 py-4">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={category.name}
+                                className="h-12 w-12 rounded-lg object-cover border border-gray-200"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerHTML = '<div class="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200"><span class="text-[10px] text-gray-400">No Image</span></div>';
+                                }}
+                              />
+                            ) : (
+                              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                                <span className="text-[10px] text-gray-400">No Image</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-500">{new Date(category.createdAt).toLocaleDateString()}</div>
+                          </td>
+                          {isAdmin && (
+                            <td className="px-6 py-4">
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => openEditModal(category)}
+                                  className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
+                                >
+                                  <FaEdit className="mr-1" /> Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCategory(category._id)}
+                                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center"
+                                >
+                                  <FaTrash className="mr-1" /> Delete
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
 
-                {/* Mobile/Small Tablet View */}
+                {/* Mobile View */}
                 <div className="md:hidden">
                   <div className="divide-y divide-gray-200">
-                    {categoriesToRender.map((category, index) => (
-                      <div key={category._id} className="p-4 hover:bg-gray-50">
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {category.name}
-                            </h3>
-                          </div>
-                          <div className="text-sm text-gray-600 mb-3">
-                            <span className="font-medium">Created:</span> {new Date(category.createdAt).toLocaleDateString()}
-                          </div>
-                          
-                          {isAdmin && (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => openEditModal(category)}
-                                className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
-                              >
-                                <FaEdit className="mr-1" /> Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCategory(category._id)}
-                                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
-                              >
-                                <FaTrash className="mr-1" /> Delete
-                              </button>
+                    {categoriesToRender.map((category, index) => {
+                      const imageUrl = getCategoryImage(category);
+                      return (
+                        <div key={category._id} className="p-4 hover:bg-gray-50">
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+                              <h3 className="text-lg font-semibold text-gray-900">{category.name}</h3>
                             </div>
-                          )}
+                            
+                            {/* Image in mobile view */}
+                            <div className="mb-3">
+                              {imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={category.name}
+                                  className="h-20 w-20 rounded-lg object-cover border border-gray-200"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
+                                    e.target.parentNode.innerHTML = '<div class="h-20 w-20 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200"><span class="text-xs text-gray-400">No Image</span></div>';
+                                  }}
+                                />
+                              ) : (
+                                <div className="h-20 w-20 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                                  <span className="text-xs text-gray-400">No Image</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="text-sm text-gray-600 mb-3">
+                              <span className="font-medium">Created:</span> {new Date(category.createdAt).toLocaleDateString()}
+                            </div>
+                            
+                            {isAdmin && (
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => openEditModal(category)}
+                                  className="bg-gradient-to-r from-[#ff0000] to-[#cc0000] hover:from-[#cc0000] hover:to-[#aa0000] text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
+                                >
+                                  <FaEdit className="mr-1" /> Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCategory(category._id)}
+                                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded text-sm font-medium transition duration-200 flex items-center justify-center flex-1"
+                                >
+                                  <FaTrash className="mr-1" /> Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -350,14 +373,12 @@ const Categories = () => {
           </div>
         </main>
 
-        {/* Add Category Modal */}
         <AddCategoryModal 
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onAddCategory={handleAddCategory}
         />
 
-        {/* Edit Category Modal */}
         <EditCategoryModal 
           isOpen={isEditModalOpen}
           onClose={closeEditModal}

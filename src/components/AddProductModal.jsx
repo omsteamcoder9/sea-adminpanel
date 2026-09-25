@@ -8,6 +8,19 @@ import {
   Save, AlertCircle, Layers, Info 
 } from 'lucide-react';
 
+// 🎯 Tamil-safe slug generator
+const generateSlug = (text) => {
+  return text
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')                // spaces → dashes
+.replace(/[^\p{L}\p{N}\p{M}\-]+/gu, '')
+    .replace(/-+/g, '-')                 // collapse multiple dashes
+    .replace(/^-+/, '')                  // trim leading dash
+    .replace(/-+$/, '');                 // trim trailing dash
+};
+
 const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -152,14 +165,8 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
     };
 
     if (name === 'name' && autoGenerateSlug) {
-      const generatedSlug = value
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
-      updatedFormData.slug = generatedSlug;
+      // 🎯 Tamil-safe slug generation
+      updatedFormData.slug = generateSlug(value);
     }
 
     setFormData(updatedFormData);
@@ -182,12 +189,10 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
     setVariants(updatedVariants);
   };
 
-  // ✅ New: sanitize numeric text input (allow digits + optional decimal)
+  // Sanitize numeric text input (allow digits + optional decimal)
   const handleNumericText = (index, field, rawValue, allowDecimal = true) => {
-    // strip everything except digits and (optionally) one dot
     let cleaned = rawValue.replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '');
     if (allowDecimal) {
-      // keep only first dot
       const parts = cleaned.split('.');
       if (parts.length > 2) cleaned = parts[0] + '.' + parts.slice(1).join('');
     }
@@ -346,17 +351,10 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
   const handleSlugToggle = (e) => {
     setAutoGenerateSlug(e.target.checked);
     if (e.target.checked && formData.name) {
-      const generatedSlug = formData.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
-      
+      // 🎯 Tamil-safe slug generation
       setFormData(prev => ({
         ...prev,
-        slug: generatedSlug
+        slug: generateSlug(formData.name)
       }));
     }
   };
@@ -431,7 +429,6 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
     try {
       const submitData = new FormData();
       
-      // Add basic fields
       Object.keys(formData).forEach(key => {
         if (formData[key] !== '' && formData[key] !== null && formData[key] !== undefined) {
           submitData.append(key, formData[key]);
@@ -478,7 +475,6 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
         submitData.append('keyFeatures', JSON.stringify(keyFeatures));
       }
 
-      // Add variant images
       Object.entries(variantImageFiles).forEach(([variantIndex, files]) => {
         files.forEach(file => {
           submitData.append(`variants[${variantIndex}].images`, file);
@@ -747,7 +743,6 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span className="text-gray-400 text-xs">₹</span>
                           </div>
-                          {/* ✅ Changed from type="number" to type="text" */}
                           <input
                             id={`variant-price-${index}`}
                             type="text"
@@ -763,7 +758,6 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                       
                       <div>
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Stock *</label>
-                        {/* ✅ Changed from type="number" to type="text" */}
                         <input
                           id={`variant-stock-${index}`}
                           type="text"
@@ -778,7 +772,6 @@ const AddProductModal = ({ isOpen, onClose, onAddProduct }) => {
                       
                       <div>
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-500 mb-1">Weight (Optional)</label>
-                        {/* ✅ Changed from type="number" to type="text" */}
                         <input
                           type="text"
                           inputMode="decimal"

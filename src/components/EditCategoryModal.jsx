@@ -11,40 +11,33 @@ const EditCategoryModal = ({ isOpen, onClose, onEditCategory, category }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const API_FILE_URL = import.meta.env.VITE_API_IMG_URL;
+  const R2_BASE = import.meta.env.VITE_R2_PUBLIC_URL;
 
   useEffect(() => {
     if (category) {
       setName(category.name || '');
       
-      // Set existing image
+      // 🎯 Build full URL from R2 key (or use directly if it's already a full URL)
       if (category.image) {
-        let imageUrl = category.image;
-        if (imageUrl.startsWith('/uploads/')) {
-          const filename = imageUrl.replace('/uploads/', '');
-          imageUrl = `${API_FILE_URL}/${filename}`;
-        }
-        setExistingImage(imageUrl);
+        const img = category.image;
+        setExistingImage(img.startsWith('http') ? img : `${R2_BASE}/${img}`);
       } else {
         setExistingImage(null);
       }
       
-      // Reset states
       setImageFile(null);
       setImagePreview(null);
       setDeleteImage(false);
     }
-  }, [category, API_FILE_URL]);
+  }, [category, R2_BASE]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please upload an image file');
         return;
       }
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size should be less than 5MB');
         return;
@@ -205,7 +198,7 @@ const EditCategoryModal = ({ isOpen, onClose, onEditCategory, category }) => {
               </div>
             )}
             
-            {/* Upload Button - Show if no image or image deleted */}
+            {/* Upload Button */}
             {!imagePreview && (deleteImage || !existingImage) && (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#ff0000] transition-colors text-center">
                 <input
@@ -228,7 +221,7 @@ const EditCategoryModal = ({ isOpen, onClose, onEditCategory, category }) => {
               </div>
             )}
             
-            {/* Change Image Button - Show if existing image present and not deleted */}
+            {/* Change Image Button */}
             {existingImage && !deleteImage && !imagePreview && (
               <button
                 type="button"

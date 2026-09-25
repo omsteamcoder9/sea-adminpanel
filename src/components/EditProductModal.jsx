@@ -8,6 +8,19 @@ import {
   Save, AlertCircle, Layers, Info 
 } from 'lucide-react';
 
+// 🎯 Tamil-safe slug generator
+const generateSlug = (text) => {
+  return text
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')                    // spaces → dashes
+    .replace(/[^\p{L}\p{N}\p{M}\-]+/gu, '')  // keep letters + numbers + marks + dashes
+    .replace(/-+/g, '-')                     // collapse multiple dashes
+    .replace(/^-+/, '')                      // trim leading dash
+    .replace(/-+$/, '');                     // trim trailing dash
+};
+
 const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -39,7 +52,6 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   // Track deleted images
   const [deletedVariantImages, setDeletedVariantImages] = useState({});
 
-  const API_FILE_URL = import.meta.env.VITE_API_IMG_URL;
   const previewUrls = useRef(new Set());
   const modalContentRef = useRef(null);
 
@@ -211,14 +223,8 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
     };
 
     if (name === 'name' && autoGenerateSlug) {
-      const generatedSlug = value
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
-      updatedFormData.slug = generatedSlug;
+      // 🎯 Tamil-safe slug generation
+      updatedFormData.slug = generateSlug(value);
     }
 
     setFormData(updatedFormData);
@@ -406,17 +412,10 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
   const handleSlugToggle = (e) => {
     setAutoGenerateSlug(e.target.checked);
     if (e.target.checked && formData.name) {
-      const generatedSlug = formData.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
-      
+      // 🎯 Tamil-safe slug generation
       setFormData(prev => ({
         ...prev,
-        slug: generatedSlug
+        slug: generateSlug(formData.name)
       }));
     }
   };
@@ -438,9 +437,10 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
       return;
     }
 
-    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    // 🎯 Tamil-safe slug validation — allow Unicode letters, numbers, marks, dashes
+    const slugRegex = /^[\p{L}\p{N}\p{M}]+(?:-[\p{L}\p{N}\p{M}]+)*$/u;
     if (!slugRegex.test(formData.slug)) {
-      setError('fieldId:product-slug|Slug can only contain lowercase letters, numbers, and hyphens');
+      setError('fieldId:product-slug|Slug can only contain letters (any language), numbers, and hyphens');
       scrollToElement('product-slug');
       return;
     }
@@ -913,12 +913,16 @@ const EditProductModal = ({ isOpen, onClose, onEditProduct, product }) => {
                             <p className="text-[11px] sm:text-xs text-gray-500 mb-2">Existing Images:</p>
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                               {variant.images.map((img, imgIdx) => {
-                                const filename = img.image.replace('/uploads/', '');
+                                const R2_BASE = import.meta.env.VITE_R2_PUBLIC_URL;
+                                const src = img.image.startsWith('http')
+                                  ? img.image
+                                  : `${R2_BASE}/${img.image}`;
+
                                 return (
                                   <div key={imgIdx} className="relative group">
                                     <div className="w-full aspect-square bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
                                       <img
-                                        src={`${API_FILE_URL}/${filename}`}
+                                        src={src}
                                         alt={`Variant ${index + 1} - ${imgIdx + 1}`}
                                         className="w-full h-full object-cover"
                                         loading="lazy"

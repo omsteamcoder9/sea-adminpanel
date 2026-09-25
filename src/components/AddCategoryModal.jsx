@@ -12,12 +12,10 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please upload an image file');
         return;
       }
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size should be less than 5MB');
         return;
@@ -57,7 +55,6 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
       }
       
       await onAddCategory(formData);
-      // Reset form
       setName('');
       removeImage();
       onClose();
@@ -81,7 +78,6 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-xl w-full max-w-md shadow-xl">
-        {/* Header */}
         <div className="flex justify-between items-center px-5 py-3 border-b">
           <h2 className="text-lg font-semibold text-gray-800">Add Category</h2>
           <button 
@@ -92,7 +88,6 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-sm">
@@ -100,7 +95,6 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
             </div>
           )}
 
-          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Category Name <span className="text-red-500">*</span>
@@ -116,10 +110,9 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
             />
           </div>
 
-          {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category Image (Optional)
+              Category Image 
             </label>
             {imagePreview ? (
               <div className="relative inline-block">
@@ -157,7 +150,6 @@ const AddCategoryModal = ({ isOpen, onClose, onAddCategory }) => {
             )}
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
