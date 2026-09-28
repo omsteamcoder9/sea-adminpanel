@@ -5,7 +5,10 @@ import Sidebar from '../components/Sidebar';
 import AddTermsModal from '../components/AddTermsModal';
 import EditTermsModal from '../components/EditTermsModal';
 import { termsAPI } from '../api/terms';
-import { FaEdit, FaTrash, FaPlus, FaSignOutAlt, FaSyncAlt, FaSearch, FaFileAlt, FaHistory, FaEye } from 'react-icons/fa';
+import { 
+  FaEdit, FaTrash, FaPlus, FaSignOutAlt, FaSyncAlt, FaSearch, 
+  FaFileAlt, FaHistory, FaEye 
+} from 'react-icons/fa';
 
 const TermsManagement = () => {
   const { logout, isAdmin } = useAuth();
@@ -24,17 +27,13 @@ const TermsManagement = () => {
   // Fetch terms from API
   const fetchTerms = async (showRefreshingState = false) => {
     try {
-      if (showRefreshingState) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-      
-      // Fetch all versions
+      if (showRefreshingState) setRefreshing(true);
+      else setLoading(true);
+
       const allVersionsResponse = await termsAPI.getAllVersions();
       setTermsList(allVersionsResponse.data.data);
       setFilteredTerms(allVersionsResponse.data.data);
-      
+
       setError('');
     } catch (error) {
       console.error('Error fetching terms:', error);
@@ -54,14 +53,13 @@ const TermsManagement = () => {
   // Search logic
   useEffect(() => {
     let results = [...termsList];
-
     if (searchTerm) {
-      results = results.filter(terms =>
-        terms.termsOfServiceTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        `Version ${terms.version}`.toLowerCase().includes(searchTerm.toLowerCase())
+      results = results.filter(
+        (terms) =>
+          terms.termsOfServiceTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          `Version ${terms.version}`.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     setFilteredTerms(results);
   }, [searchTerm, termsList]);
 
@@ -103,20 +101,24 @@ const TermsManagement = () => {
   };
 
   const handleDeleteTerms = async (id, version) => {
-    if (!window.confirm(`Are you sure you want to delete Version ${version}? This action cannot be undone.`)) return;
-    
+    if (
+      !window.confirm(
+        `Are you sure you want to delete Version ${version}? This action cannot be undone.`
+      )
+    )
+      return;
+
     try {
       await termsAPI.deleteTerms(id);
-      const remainingTerms = termsList.filter(terms => terms._id !== id);
+      const remainingTerms = termsList.filter((terms) => terms._id !== id);
       setTermsList(remainingTerms);
       setFilteredTerms(remainingTerms);
-      
+
       setError('✅ Terms version deleted successfully!');
       setTimeout(() => setError(''), 3000);
     } catch (error) {
       console.error('Error deleting terms:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to delete terms version';
-      setError(errorMsg);
+      setError(error.response?.data?.message || 'Failed to delete terms version');
     }
   };
 
@@ -141,6 +143,7 @@ const TermsManagement = () => {
   };
 
   const termsToRender = Array.isArray(filteredTerms) ? filteredTerms : [];
+  const latestVersion = termsList[0]?.version || 0;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -151,9 +154,8 @@ const TermsManagement = () => {
         <header className="bg-white shadow">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-800">Terms of Service Management</h1>
+              <h1 className="text-xl font-bold text-gray-800">Terms Management</h1>
             </div>
-
             <div className="flex items-center">
               <button
                 onClick={logout}
@@ -170,24 +172,23 @@ const TermsManagement = () => {
         {/* Main Content */}
         <main className="p-4 sm:p-6">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-700">
-                Terms of Service Versions ({termsToRender.length})
-              </h2>
-            </div>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-700 flex items-center">
+              <FaFileAlt className="mr-2 text-[#ff0000]" />
+              Terms Versions ({termsToRender.length})
+            </h2>
             <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
               <button
                 onClick={handleRefresh}
                 disabled={loading || refreshing}
                 className="flex-1 sm:flex-none bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition duration-200 text-sm min-h-[42px] disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Refresh terms"
+                title="Refresh"
               >
                 <FaSyncAlt className={`sm:mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">
                   {refreshing ? 'Refreshing...' : 'Refresh'}
                 </span>
               </button>
-              
+
               {isAdmin && (
                 <button
                   onClick={() => setIsAddModalOpen(true)}
@@ -202,16 +203,18 @@ const TermsManagement = () => {
           </div>
 
           {error && (
-            <div className={`px-4 py-3 rounded mb-4 text-sm ${
-              error.includes('✅') 
-                ? 'bg-green-50 border border-green-200 text-green-700' 
-                : 'bg-red-50 border border-red-200 text-red-700'
-            }`}>
+            <div
+              className={`px-4 py-3 rounded mb-4 text-sm ${
+                error.includes('✅')
+                  ? 'bg-green-50 border border-green-200 text-green-700'
+                  : 'bg-red-50 border border-red-200 text-red-700'
+              }`}
+            >
               {error}
             </div>
           )}
 
-          {/* Search Section */}
+          {/* Search Bar */}
           <div className="mb-6 bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -225,7 +228,7 @@ const TermsManagement = () => {
             </div>
           </div>
 
-          {/* Terms Table */}
+          {/* Table */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {loading ? (
               <div className="text-center py-8">
@@ -252,17 +255,29 @@ const TermsManagement = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                {/* Desktop/Large Tablet View */}
+                {/* Desktop Table */}
                 <table className="hidden md:table min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sections</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        S.No
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Version
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Last Updated
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Sections
+                      </th>
                       {isAdmin && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       )}
                     </tr>
                   </thead>
@@ -270,19 +285,42 @@ const TermsManagement = () => {
                     {termsToRender.map((terms, index) => (
                       <tr key={terms._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{index + 1}</div>
+                          <div className="text-sm font-medium text-gray-900 text-center">
+                            {index + 1}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">v{terms.version}</div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                terms.version === latestVersion
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
+                              v{terms.version}
+                            </span>
+                            {terms.version === latestVersion && (
+                              <span className="text-[10px] font-medium text-green-700">
+                                LATEST
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{terms.termsOfServiceTitle}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {terms.termsOfServiceTitle}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500">{terms.termsOfServiceLastUpdated}</div>
+                          <div className="text-sm text-gray-500">
+                            {terms.termsOfServiceLastUpdated}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500">{terms.termsSections?.length || 0} sections</div>
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {terms.termsSections?.length || 0} sections
+                          </span>
                         </td>
                         {isAdmin && (
                           <td className="px-6 py-4">
@@ -316,23 +354,45 @@ const TermsManagement = () => {
                   </tbody>
                 </table>
 
-                {/* Mobile/Small Tablet View */}
+                {/* Mobile View */}
                 <div className="md:hidden">
                   <div className="divide-y divide-gray-200">
                     {termsToRender.map((terms, index) => (
                       <div key={terms._id} className="p-4 hover:bg-gray-50">
                         <div className="mb-3">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+                            <span className="text-sm font-medium text-gray-500">
+                              #{index + 1}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  terms.version === latestVersion
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-700'
+                                }`}
+                              >
+                                v{terms.version}
+                              </span>
+                              {terms.version === latestVersion && (
+                                <span className="text-[10px] font-medium text-green-700">
+                                  LATEST
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            v{terms.version}: {terms.termsOfServiceTitle}
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {terms.termsOfServiceTitle}
                           </h3>
-                          <div className="text-sm text-gray-600 mb-2">
-                            <span className="font-medium">Updated:</span> {terms.termsOfServiceLastUpdated}<br />
-                            <span className="font-medium">Sections:</span> {terms.termsSections?.length || 0}
+                          <div className="text-xs text-gray-500 mt-1">
+                            Updated: {terms.termsOfServiceLastUpdated}
                           </div>
-                          
+                          <div className="mt-2">
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                              {terms.termsSections?.length || 0} sections
+                            </span>
+                          </div>
+
                           {isAdmin && (
                             <div className="flex space-x-2 mt-3">
                               <button
@@ -371,8 +431,9 @@ const TermsManagement = () => {
                 <FaHistory className="text-blue-500 mt-0.5" />
                 <div>
                   <p className="text-sm text-blue-800">
-                    <strong>Version History:</strong> Each time you edit the terms of service, a new version is created. 
-                    The latest version is shown to users. Previous versions are kept for legal records.
+                    <strong>Version History:</strong> Each time you edit the terms of service,
+                    a new version is created. The latest version is shown to users. Previous
+                    versions are kept for legal records.
                   </p>
                 </div>
               </div>
@@ -380,22 +441,20 @@ const TermsManagement = () => {
           )}
         </main>
 
-        {/* Add Terms Modal */}
-        <AddTermsModal 
+        {/* Modals */}
+        <AddTermsModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onAddTerms={handleAddTerms}
         />
 
-        {/* Edit Terms Modal */}
-        <EditTermsModal 
+        <EditTermsModal
           isOpen={isEditModalOpen}
           onClose={closeEditModal}
           onEditTerms={handleEditTerms}
           terms={editingTerms}
         />
 
-        {/* View Terms Modal */}
         {isViewModalOpen && viewingTerms && (
           <ViewTermsModal
             isOpen={isViewModalOpen}
@@ -417,7 +476,7 @@ const ViewTermsModal = ({ isOpen, onClose, terms }) => {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50 overflow-y-auto"
       onClick={handleBackdropClick}
     >
@@ -432,8 +491,8 @@ const ViewTermsModal = ({ isOpen, onClose, terms }) => {
               Version {terms.version} • Last updated: {terms.termsOfServiceLastUpdated}
             </p>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-gray-400 hover:text-[#ff0000] transition-colors"
           >
             <FaFileAlt size={24} />
@@ -450,10 +509,15 @@ const ViewTermsModal = ({ isOpen, onClose, terms }) => {
           {/* User Requirements */}
           {terms.termsUserRequirements && terms.termsUserRequirements.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">User Requirements</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                User Requirements
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {terms.termsUserRequirements.map((req, idx) => (
-                  <div key={idx} className="bg-gray-50 px-3 py-2 rounded text-sm text-gray-700">
+                  <div
+                    key={idx}
+                    className="bg-gray-50 px-3 py-2 rounded text-sm text-gray-700"
+                  >
                     • {req}
                   </div>
                 ))}
@@ -463,10 +527,15 @@ const ViewTermsModal = ({ isOpen, onClose, terms }) => {
 
           {/* Terms Sections */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Terms Sections</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Terms Sections
+            </h3>
             <div className="space-y-6">
               {terms.termsSections.map((section) => (
-                <div key={section.number} className="border-l-4 border-[#ff0000] pl-4">
+                <div
+                  key={section.number}
+                  className="border-l-4 border-[#ff0000] pl-4"
+                >
                   <h4 className="font-semibold text-gray-800 mb-2">
                     {section.number}. {section.title}
                   </h4>
@@ -479,19 +548,31 @@ const ViewTermsModal = ({ isOpen, onClose, terms }) => {
           {/* Legal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Intellectual Property</h4>
-              <p className="text-gray-600 text-sm">{terms.termsIntellectualProperty}</p>
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Intellectual Property
+              </h4>
+              <p className="text-gray-600 text-sm">
+                {terms.termsIntellectualProperty}
+              </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Limitation of Liability</h4>
-              <p className="text-gray-600 text-sm">{terms.termsLimitationLiability}</p>
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Limitation of Liability
+              </h4>
+              <p className="text-gray-600 text-sm">
+                {terms.termsLimitationLiability}
+              </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Changes to Terms</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Changes to Terms
+              </h4>
               <p className="text-gray-600 text-sm">{terms.termsChangesNotice}</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Contact Information</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Contact Information
+              </h4>
               <p className="text-gray-600 text-sm">{terms.termsContactInfo}</p>
             </div>
           </div>

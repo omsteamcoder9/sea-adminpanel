@@ -38,7 +38,11 @@ const OrdersPage = () => {
   const [bulkAssignSearchTerm, setBulkAssignSearchTerm] = useState('');
   const [bulkAssigning, setBulkAssigning] = useState(false);
 
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  // ✅ NEW — Bulk delete state
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const [viewMode, setViewMode] = useState('grid');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   const [sortOption, setSortOption] = useState('newest');
@@ -101,6 +105,7 @@ const OrdersPage = () => {
           (customer.name && customer.name.toLowerCase().includes(term)) ||
           (customer.email && customer.email.toLowerCase().includes(term)) ||
           (customer.phone && customer.phone.toLowerCase().includes(term)) ||
+          (customer.alternatePhone && customer.alternatePhone.toLowerCase().includes(term)) ||
           cityText.includes(term) ||
           areaText.includes(term) ||
           wardText.includes(term)
@@ -264,6 +269,46 @@ const OrdersPage = () => {
     await fetchOrders(true);
 
     alert(`✅ Assigned ${ok} order${ok !== 1 ? 's' : ''}${fail > 0 ? ` • ❌ Failed ${fail}` : ''}`);
+  };
+
+  // ✅ NEW — Bulk delete handler
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedOrderIds);
+    if (ids.length === 0) {
+      alert('No orders selected');
+      return;
+    }
+
+    setBulkDeleting(true);
+    let ok = 0;
+    let fail = 0;
+
+    for (const orderId of ids) {
+      try {
+        const res = await ordersAPI.deleteOrder(orderId);
+        if (res.data?.success) ok++;
+        else fail++;
+      } catch (err) {
+        console.error('Delete failed for', orderId, err);
+        fail++;
+      }
+    }
+
+    setBulkDeleting(false);
+    setBulkDeleteModalOpen(false);
+
+    // Optimistic removal
+    setOrders(prev => prev.filter(o => !selectedOrderIds.has(o._id)));
+    clearSelection();
+
+    await fetchOrders(true);
+
+    if (ok > 0) {
+      setError(`✅ Deleted ${ok} order${ok !== 1 ? 's' : ''}${fail > 0 ? ` • ❌ Failed ${fail}` : ''}`);
+    } else {
+      setError('❌ Failed to delete orders');
+    }
+    setTimeout(() => setError(''), 4000);
   };
 
   const openAssignModal = (order) => {
@@ -490,12 +535,28 @@ const OrdersPage = () => {
     return <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${colors[paymentStatus] || 'bg-gray-100 text-gray-800'}`}>{paymentStatus}</span>;
   };
 
+  // ✅ includes alternatePhone
   const getCustomerInfo = (order) => {
     const name = order.name || order.shippingAddress?.name || order.customer?.name || order.user?.name || order.customerName || order.guestUser?.name || 'Customer';
     const email = order.shippingAddress?.email || order.customer?.email || order.user?.email || order.customerEmail || order.guestUser?.email || order.email || '';
     const phone = order.shippingAddress?.phone || order.customer?.phone || order.user?.phone || order.phoneNumber || order.guestUser?.phone || '';
+
+    const alternatePhone =
+      order.alternatePhone ||
+      order.altPhone ||
+      order.alternativePhone ||
+      order.phone2 ||
+      order.secondaryPhone ||
+      order.phoneNumber2 ||
+      order.shippingAddress?.alternatePhone ||
+      order.shippingAddress?.altPhone ||
+      order.shippingAddress?.alternativePhone ||
+      order.customer?.alternatePhone ||
+      order.customer?.altPhone ||
+      '';
+
     const isGuest = !order.user || (typeof order.user === 'string' && !order.user);
-    return { name, email, phone, isGuest };
+    return { name, email, phone, alternatePhone, isGuest };
   };
 
   const getOrderId = (order) => {
@@ -504,7 +565,6 @@ const OrdersPage = () => {
     return order._id || order.id || order.orderId;
   };
 
-  // ✅ Helper: build product summary string with weight + quantity
   const buildProductSummary = (order, limit = null) => {
     const products = order.products || [];
     if (products.length === 0) return 'No items';
@@ -531,7 +591,7 @@ const OrdersPage = () => {
   const selectedCount = selectedOrderIds.size;
 
   // ============================================================
-  // Order Card — mobile-first, aligned
+  // Order Card
   // ============================================================
   const OrderCard = ({ order, index, viewMode = 'grid', expanded = false, onToggleExpand }) => {
     const customer = getCustomerInfo(order);
@@ -556,7 +616,6 @@ const OrdersPage = () => {
         {/* Header */}
         <div className={`flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b ${isSelected ? 'bg-red-100/70 border-red-200' : 'bg-gradient-to-r from-gray-50 to-white border-gray-200'}`}>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            {/* Checkbox */}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); toggleOrderSelect(order._id); }}
@@ -570,12 +629,10 @@ const OrdersPage = () => {
               {isSelected ? <FaCheck size={13} className="sm:w-4 sm:h-4" /> : <FaSquare size={11} className="sm:w-3.5 sm:h-3.5" />}
             </button>
 
-            {/* S.No */}
             <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold flex-shrink-0 ${isSelected ? 'bg-[#ff0000] text-white' : 'bg-[#ff0000]/10 text-[#ff0000]'}`}>
               {index + 1}
             </div>
 
-            {/* Order ID + date */}
             <div className="min-w-0 flex-1">
               <p className="text-[11px] sm:text-xs font-mono font-bold text-gray-800 truncate">
                 #{order.orderId || order._id?.slice(-8)}
@@ -584,7 +641,6 @@ const OrdersPage = () => {
             </div>
           </div>
 
-          {/* Right: badges + expand */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {getStatusBadge(order.orderStatus)}
             {getPaymentStatusBadge(order.paymentStatus)}
@@ -613,7 +669,6 @@ const OrdersPage = () => {
         {/* List view — compact summary when NOT expanded */}
         {isListView && !expanded && (
           <div className="px-3 sm:px-4 py-2.5 sm:py-3">
-            {/* Top row: name + phone */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-[13px] mb-1.5">
               <span className="inline-flex items-center gap-1.5 min-w-0">
                 <FaUser className="text-gray-400 flex-shrink-0" size={11} />
@@ -625,9 +680,15 @@ const OrdersPage = () => {
                   <FaPhone size={10} /> {customer.phone}
                 </a>
               )}
+
+              {customer.alternatePhone && (
+                <a href={`tel:${customer.alternatePhone}`} className="inline-flex items-center gap-1.5 text-blue-600 hover:underline whitespace-nowrap" title="Alternate phone">
+                  <FaPhone size={10} /> {customer.alternatePhone}
+                  <span className="text-[9px] font-semibold px-1 rounded bg-blue-100 text-blue-700">ALT</span>
+                </a>
+              )}
             </div>
 
-            {/* Middle row: ward / area */}
             {(order.wardName || order.typedArea || order.shippingAddress?.city) && (
               <div className="flex items-start gap-1.5 text-[11px] sm:text-xs text-gray-600 mb-1.5">
                 <FaMapMarkerAlt className="text-gray-400 flex-shrink-0 mt-0.5" size={11} />
@@ -637,7 +698,6 @@ const OrdersPage = () => {
               </div>
             )}
 
-            {/* Bottom row: items (with product name + weight + quantity), delivery boy, total, actions */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] sm:text-xs">
               <span className="inline-flex items-center gap-1 text-gray-600 min-w-0">
                 <FaBox className="text-gray-400 flex-shrink-0" size={11} />
@@ -690,9 +750,17 @@ const OrdersPage = () => {
                   <FaUser className="text-gray-400 mt-0.5 flex-shrink-0" size={12} />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-800 truncate">{customer.name}</p>
+
                     {customer.phone && (
                       <a href={`tel:${customer.phone}`} className="text-[11px] text-[#ff0000] hover:underline flex items-center gap-1 break-all">
                         <FaPhone size={9} className="flex-shrink-0" /> {customer.phone}
+                      </a>
+                    )}
+
+                    {customer.alternatePhone && (
+                      <a href={`tel:${customer.alternatePhone}`} className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 break-all" title="Alternate phone">
+                        <FaPhone size={9} className="flex-shrink-0" /> {customer.alternatePhone}
+                        <span className="text-[9px] font-semibold px-1 rounded bg-blue-100 text-blue-700">ALT</span>
                       </a>
                     )}
                   </div>
@@ -796,7 +864,6 @@ const OrdersPage = () => {
               </div>
             </div>
 
-            {/* Footer actions */}
             <div className={`px-3 sm:px-4 py-2.5 sm:py-3 border-t flex flex-wrap gap-2 ${isSelected ? 'bg-red-50/70 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
               <button
                 onClick={() => fetchOrderReceipt(orderId)}
@@ -1048,7 +1115,58 @@ const OrdersPage = () => {
     );
   };
 
+  // ============================================================
+  // ✅ NEW — BULK Delete Confirmation Modal
+  // ============================================================
+  const BulkDeleteModal = ({ count, onClose, onConfirm, busy }) => {
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+          <div className="w-14 h-14 mx-auto rounded-full bg-red-100 flex items-center justify-center mb-4">
+            <span className="text-red-600 text-2xl">🗑️</span>
+          </div>
+
+          <h3 className="text-lg font-bold text-center text-gray-900 mb-2">
+            Delete {count} Order{count !== 1 ? 's' : ''}?
+          </h3>
+
+          <p className="text-gray-600 text-sm text-center mb-6">
+            You are about to permanently delete{' '}
+            <strong className="text-red-600">{count} order{count !== 1 ? 's' : ''}</strong>.
+            This action <strong>cannot be undone</strong>.
+          </p>
+
+          {busy && (
+            <div className="mb-4 flex items-center justify-center gap-2 text-sm text-gray-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
+              Deleting orders...
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              disabled={busy}
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={busy}
+              className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {busy ? 'Deleting...' : '🗑️ Yes, Delete All'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================================
   // Receipt Modal
+  // ============================================================
   const ReceiptModal = ({ order, onClose, onDownloadPDF }) => {
     if (!order) return null;
     const receiptData = order.receipt || order;
@@ -1056,6 +1174,16 @@ const OrdersPage = () => {
     const customerName = receiptData.name || receiptData.shippingAddress?.name || receiptData.customer?.name || 'Customer';
     const customerEmail = receiptData.customer?.email || receiptData.user?.email || receiptData.shippingAddress?.email || receiptData.email || 'N/A';
     const customerPhone = receiptData.customer?.phone || receiptData.user?.phone || receiptData.shippingAddress?.phone || 'N/A';
+
+    const customerAltPhone =
+      receiptData.alternatePhone ||
+      receiptData.altPhone ||
+      receiptData.alternativePhone ||
+      receiptData.shippingAddress?.alternatePhone ||
+      receiptData.shippingAddress?.altPhone ||
+      receiptData.customer?.alternatePhone ||
+      '';
+
     const items = receiptData.products || receiptData.items || [];
     const subtotal = receiptData.pricing?.subtotal || receiptData.totalAmount || 0;
     const shipping = receiptData.pricing?.shipping || receiptData.shippingFee || 0;
@@ -1098,7 +1226,20 @@ const OrdersPage = () => {
             <div className="mb-4 p-3 bg-gray-50 rounded-lg border text-xs space-y-1">
               <div className="flex items-center gap-1"><span>👤</span><span className="font-medium">{customerName}</span></div>
               {customerEmail !== 'N/A' && <div className="flex items-center gap-1"><span>✉️</span><span className="break-all">{customerEmail}</span></div>}
-              <div className="flex items-center gap-1"><span>📞</span><span>{customerPhone}</span></div>
+
+              <div className="flex items-center gap-1">
+                <span>📞</span>
+                <span>{customerPhone}</span>
+              </div>
+
+              {customerAltPhone && (
+                <div className="flex items-center gap-1">
+                  <span>📞</span>
+                  <span>{customerAltPhone}</span>
+                  <span className="text-[9px] font-semibold px-1 rounded bg-blue-100 text-blue-700">ALT</span>
+                </div>
+              )}
+
               {shippingAddress && (
                 <div className="mt-2 pt-2 border-t space-y-1">
                   <div className="font-medium text-gray-600">Shipping Address:</div>
@@ -1151,7 +1292,7 @@ const OrdersPage = () => {
     );
   };
 
-  // Delete Confirmation Modal
+  // Delete Confirmation Modal (single)
   const DeleteConfirmationModal = ({ show, onClose, onConfirm, orderNumber }) => {
     if (!show) return null;
     return (
@@ -1198,100 +1339,131 @@ const OrdersPage = () => {
         </header>
 
         <main className="p-3 sm:p-6 max-w-7xl mx-auto w-full">
-          {/* Heading + actions */}
-          <div className="flex flex-col gap-3 mb-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                  <FaTag className="text-[#ff0000] flex-shrink-0" size={16} />All Orders
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {filteredOrders.length} of {totalOrders} orders
-                  {selectedCount > 0 && (
-                    <span className="ml-2 text-[#ff0000] font-semibold">• {selectedCount} selected</span>
-                  )}
-                </p>
-              </div>
+  {/* Heading + Actions */}
+<div className="flex flex-col gap-3 mb-4">
 
-              {/* Actions row */}
-              <div className="flex flex-wrap gap-2">
-                {selectedCount >= 2 && (
-                  <>
-                    <button
-                      onClick={() => { setBulkAssignModalOpen(true); setBulkAssignSearchTerm(''); }}
-                      className="bg-[#ff0000] hover:bg-[#cc0000] text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 shadow-sm flex-shrink-0"
-                    >
-                      <FaTruck size={11} /> Assign {selectedCount}
-                    </button>
-                    <button
-                      onClick={clearSelection}
-                      className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm flex-shrink-0"
-                    >
-                      Clear
-                    </button>
-                  </>
-                )}
+  {/* Row 1: Title (full width) */}
+  <div className="min-w-0">
+    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+      <FaTag className="text-[#ff0000] flex-shrink-0" size={16} />
+      All Orders
+    </h2>
+    <p className="text-xs text-gray-500 mt-0.5">
+      {filteredOrders.length} of {totalOrders} orders
+      {selectedCount > 0 && (
+        <span className="ml-2 text-[#ff0000] font-semibold">
+          • {selectedCount} selected
+        </span>
+      )}
+    </p>
+  </div>
 
-                {/* View mode toggle */}
-                <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden shadow-sm flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('grid')}
-                    className={`px-2.5 sm:px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors ${
-                      viewMode === 'grid'
-                        ? 'bg-[#ff0000] text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
-                    title="Grid view"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <rect x="0" y="0" width="7" height="7" rx="1" />
-                      <rect x="9" y="0" width="7" height="7" rx="1" />
-                      <rect x="0" y="9" width="7" height="7" rx="1" />
-                      <rect x="9" y="9" width="7" height="7" rx="1" />
-                    </svg>
-                    <span className="hidden sm:inline">Grid</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setViewMode('list'); setExpandedOrderId(null); }}
-                    className={`px-2.5 sm:px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors border-l border-gray-300 ${
-                      viewMode === 'list'
-                        ? 'bg-[#ff0000] text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
-                    title="List view"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <rect x="0" y="0" width="16" height="3" rx="1" />
-                      <rect x="0" y="6.5" width="16" height="3" rx="1" />
-                      <rect x="0" y="13" width="16" height="3" rx="1" />
-                    </svg>
-                    <span className="hidden sm:inline">List</span>
-                  </button>
-                </div>
+  {/* Row 2: Bulk actions — only when 2+ selected */}
+{selectedCount >= 2 && (
+  <div className="fixed top-12 mt-6.5 right-2 left-2 sm:top-16 sm:left-auto sm:right-6 z-30 bg-red-50 border border-red-300 sm:border-2 rounded-lg sm:rounded-xl p-1.5 sm:p-3 shadow-lg sm:shadow-xl">
+    <div className="flex items-center gap-1.5 sm:gap-3">
 
-                <button
-                  onClick={handleDownloadTodayOrders}
-                  disabled={downloadingToday}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 shadow-sm flex-shrink-0"
-                >
-                  {downloadingToday ? '📄...' : <><span className="hidden sm:inline">📄 Today's Orders PDF</span><span className="sm:hidden">📄 PDF</span></>}
-                </button>
+      {/* Count */}
+      <span className="text-[10px] sm:text-sm font-bold text-[#ff0000] whitespace-nowrap">
+        {selectedCount}
+      </span>
 
-                <button
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 shadow-sm flex-shrink-0"
-                >
-                  <FaSyncAlt className={refreshing ? 'animate-spin' : ''} size={11} />
-                  <span className="hidden sm:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* Buttons */}
+      <div className="flex gap-1 sm:gap-2 flex-1">
+        <button
+          onClick={() => { setBulkAssignModalOpen(true); setBulkAssignSearchTerm(''); }}
+          className="flex-1 sm:flex-none bg-[#ff0000] active:bg-[#990000] text-white px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-[10px] sm:text-sm font-semibold flex items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap"
+        >
+          <FaTruck size={9} className="sm:hidden" />
+          <FaTruck size={11} className="hidden sm:block" />
+          <span>Assign</span>
+        </button>
 
-          {/* Stat cards */}
+        <button
+          onClick={() => setBulkDeleteModalOpen(true)}
+          className="flex-1 sm:flex-none bg-red-600 active:bg-red-800 text-white px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-[10px] sm:text-sm font-semibold flex items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap"
+        >
+          <span>🗑️</span>
+          <span>Delete</span>
+        </button>
+
+        <button
+          onClick={clearSelection}
+          className="flex-1 sm:flex-none bg-white border border-gray-300 active:bg-gray-100 text-gray-700 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-[10px] sm:text-sm font-semibold whitespace-nowrap"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+  {/* Row 3: Primary actions — Grid/List + PDF + Refresh */}
+  <div className="flex flex-wrap items-center gap-2">
+
+    {/* Grid / List toggle */}
+    <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden shadow-sm">
+      <button
+        type="button"
+        onClick={() => setViewMode('grid')}
+        className={`px-3 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
+          viewMode === 'grid' ? 'bg-[#ff0000] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+        }`}
+        title="Grid view"
+      >
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="0" y="0" width="7" height="7" rx="1" />
+          <rect x="9" y="0" width="7" height="7" rx="1" />
+          <rect x="0" y="9" width="7" height="7" rx="1" />
+          <rect x="9" y="9" width="7" height="7" rx="1" />
+        </svg>
+        <span className="hidden sm:inline">Grid</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => { setViewMode('list'); setExpandedOrderId(null); }}
+        className={`px-3 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors border-l border-gray-300 ${
+          viewMode === 'list' ? 'bg-[#ff0000] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+        }`}
+        title="List view"
+      >
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="0" y="0" width="16" height="3" rx="1" />
+          <rect x="0" y="6.5" width="16" height="3" rx="1" />
+          <rect x="0" y="13" width="16" height="3" rx="1" />
+        </svg>
+        <span className="hidden sm:inline">List</span>
+      </button>
+    </div>
+
+    {/* PDF button — grows on mobile, auto on desktop */}
+    <button
+      onClick={handleDownloadTodayOrders}
+      disabled={downloadingToday}
+      className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm whitespace-nowrap"
+    >
+      {downloadingToday ? (
+        <>📄...</>
+      ) : (
+        <>
+          <span className="hidden sm:inline">📄 Today's Orders PDF</span>
+          <span className="sm:hidden">📄 PDF</span>
+        </>
+      )}
+    </button>
+
+    {/* Refresh — grows on mobile, auto on desktop */}
+    <button
+      onClick={handleRefresh}
+      disabled={refreshing}
+      className="flex-1 sm:flex-none bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm whitespace-nowrap"
+    >
+      <FaSyncAlt className={refreshing ? 'animate-spin' : ''} size={11} />
+      <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+    </button>
+  </div>
+</div>
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
             {[
               { label: 'Total Orders', value: totalOrders, gradient: 'from-blue-500 to-blue-600' },
@@ -1306,14 +1478,13 @@ const OrdersPage = () => {
             ))}
           </div>
 
-          {/* Filter bar */}
           <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 mb-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               <div className="relative sm:col-span-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input
                   type="text"
-                  placeholder="Search order, name, city, ward..."
+                  placeholder="Search order, name, phone, city, ward..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
@@ -1345,7 +1516,6 @@ const OrdersPage = () => {
             </div>
           )}
 
-          {/* Orders list */}
           {filteredOrders.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
               <Search className="mx-auto h-12 w-12 text-gray-300" />
@@ -1393,6 +1563,16 @@ const OrdersPage = () => {
           busy={bulkAssigning}
           onClose={() => { setBulkAssignModalOpen(false); setBulkAssignSearchTerm(''); }}
           onSelect={(boyId) => handleBulkAssign(boyId)}
+        />
+      )}
+
+      {/* ✅ Bulk Delete Modal */}
+      {bulkDeleteModalOpen && (
+        <BulkDeleteModal
+          count={selectedCount}
+          busy={bulkDeleting}
+          onClose={() => setBulkDeleteModalOpen(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
 
